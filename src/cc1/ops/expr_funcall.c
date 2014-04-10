@@ -1,6 +1,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "../../util/dynarray.h"
 #include "../../util/platform.h"
@@ -264,6 +265,43 @@ static void default_promote_args(
 		expr_promote_default(&args[i], stab);
 }
 
+static stmt *try_single_stmt_call(expr *fnexpr)
+{
+	decl *func_decl;
+	stmt *code;
+	expr *callexpr = expr_skip_casts(fnexpr->expr);
+
+	if(!expr_kind(callexpr, identifier))
+		return NULL;
+
+	func_decl = callexpr->bits.ident.sym->decl;
+	if(!func_decl)
+		return NULL;
+
+	code = func_decl->bits.func.code;
+	if(!code)
+		return NULL;
+
+	assert(stmt_kind(code, code));
+	if(dynarray_count(code->bits.code.stmts) > 1)
+		return NULL;
+
+	return code->bits.code.stmts[0];
+}
+
+static void try_func_inline(expr *fnexpr)
+{
+	stmt *code = try_single_stmt_call(fnexpr);
+
+	if(!code)
+		return;
+
+	if(!stmt_kind(code, return))
+		return;
+
+	fprintf(stderr, "inline call to %s\n", code->f_str());
+}
+
 void fold_expr_funcall(expr *e, symtable *stab)
 {
 	type *func_ty;
@@ -334,6 +372,8 @@ void fold_expr_funcall(expr *e, symtable *stab)
 	/* check the subexp tree type to get the funcall attributes */
 	if(func_attr_present(e, attr_warn_unused))
 		e->freestanding = 0; /* needs use */
+
+	try_func_inline(e);
 }
 
 void gen_expr_funcall(expr *e)
