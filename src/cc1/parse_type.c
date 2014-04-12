@@ -1322,11 +1322,14 @@ static void decl_pull_to_func(decl *const d_this, decl *const d_prev)
 			/* else we want the warning below */
 		}
 
-		warn_at(&d_this->where,
-				"declaration of \"%s\" after definition is ignored\n"
-				"%s: note: definition here",
-				d_this->spel,
-				where_str_r(wbuf, &d_prev->where));
+		/* if both have func code, skip the warning - caught later */
+		if(!d_this->bits.func.code || !d_prev->bits.func.code){
+			warn_at(&d_this->where,
+					"declaration of \"%s\" after definition is ignored\n"
+					"%s: note: definition here",
+					d_this->spel,
+					where_str_r(wbuf, &d_prev->where));
+		}
 		return;
 	}
 
