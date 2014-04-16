@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <assert.h>
 
 #include "../util/util.h"
@@ -32,7 +33,7 @@ char *ustrdup(const char *s)
 
 char *ustrdup2(const char *a, const char *b)
 {
-	int len = b - a;
+	ptrdiff_t len = b - a;
 	char *ret;
 	assert(b >= a);
 	ret = umalloc(len + 1);
