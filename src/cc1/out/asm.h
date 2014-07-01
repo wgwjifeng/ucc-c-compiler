@@ -1,30 +1,9 @@
 #ifndef OUT_ASM_H
 #define OUT_ASM_H
 
-enum section_type
-{
-	SECTION_TEXT,
-	SECTION_DATA,
-	SECTION_BSS,
-	SECTION_RODATA,
-	SECTION_DBG_ABBREV,
-	SECTION_DBG_INFO,
-	SECTION_DBG_LINE,
-	NUM_SECTIONS
-};
-
 #define SECTION_BEGIN ASM_PLBL_PRE "section_begin_"
 #define SECTION_END   ASM_PLBL_PRE "section_end_"
-#define QUOTE_(...) #__VA_ARGS__
-#define QUOTE(y) QUOTE_(y)
 
-extern struct section
-{
-	const char *desc;
-	const char *name;
-} sections[];
-
-extern FILE *cc_out[NUM_SECTIONS];
 extern FILE *cc1_out;
 
 void asm_out_section(enum section_type, const char *fmt, ...);

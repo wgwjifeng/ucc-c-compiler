@@ -34,6 +34,8 @@ struct out_ctx
 	/* mark callee save regs, to preserve at prologue */
 	struct vreg *used_callee_saved;
 
+	dynmap *sections; /* char * => struct section * */
+
 	struct
 	{
 		struct out_dbg_filelist *file_head;

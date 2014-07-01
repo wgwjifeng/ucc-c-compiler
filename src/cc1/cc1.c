@@ -193,16 +193,6 @@ int caught_sig = 0;
 
 int show_current_line;
 
-struct section sections[NUM_SECTIONS] = {
-	{ "text", QUOTE(SECTION_NAME_TEXT) },
-	{ "data", QUOTE(SECTION_NAME_DATA) },
-	{ "bss",  QUOTE(SECTION_NAME_BSS) },
-	{ "rodata", QUOTE(SECTION_NAME_RODATA) },
-	{ "dbg_abrv", QUOTE(SECTION_NAME_DBG_ABBREV) },
-	{ "dbg_info", QUOTE(SECTION_NAME_DBG_INFO) },
-	{ "dbg_line", QUOTE(SECTION_NAME_DBG_LINE) },
-};
-
 static FILE *infile;
 
 /* compile time check for enum <-> int compat */
