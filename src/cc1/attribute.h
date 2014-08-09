@@ -27,6 +27,7 @@ struct attribute
 		attr_aligned,
 		attr_weak,
 		attr_cleanup,
+		attr_mode, /* needed for _GNU_SOURCE headers - uint8 is int-QI-mode rather than char */
 		attr_ucc_debug, /* logs out a message when handled */
 		attr_LAST
 		/*
@@ -63,6 +64,14 @@ struct attribute
 		struct expr *align, *sentinel;
 		struct decl *cleanup;
 		int ucc_debugged;
+		enum attr_mode
+		{
+			mode_QI,
+			mode_HI,
+			mode_SI,
+			mode_DI,
+			mode_word
+		} mode;
 	} bits;
 
 	attribute *next;

@@ -17,6 +17,8 @@
 
 #include "parse_expr.h"
 
+#define ATTR_STRCMP(a, k) (!strcmp(a, k) || !strcmp(a, "__" k "__"))
+
 static void parse_attr_bracket_chomp(int had_open_paren);
 
 static attribute *parse_attr_format(symtable *scope)
@@ -39,10 +41,9 @@ static attribute *parse_attr_format(symtable *scope)
 	if(!func)
 		return NULL;
 
-#define CHECK(s) !strcmp(func, s) || !strcmp(func, "__" s "__")
-	if(CHECK("printf")){
+	if(ATTR_STRCMP(func, "printf")){
 		fmt = attr_fmt_printf;
-	}else if(CHECK("scanf")){
+	}else if(ATTR_STRCMP(func, "scanf")){
 		fmt = attr_fmt_scanf;
 	}else{
 		cc1_warn_at(NULL, attr_format_unknown,
@@ -208,6 +209,51 @@ static attribute *parse_attr_cleanup(symtable *scope)
 	return attr;
 }
 
+static attribute *parse_attr_mode(symtable *scope)
+{
+	static const struct
+	{
+		const char mode[16];
+		enum attr_mode emode;
+	} modes[] = {
+#define MODE(x) { #x, mode_ ## x }, { "__" #x "__", mode_ ## x }
+		MODE(QI),
+		MODE(HI),
+		MODE(SI),
+		MODE(DI),
+		MODE(word),
+#undef MODE
+		{ "", 0 }
+	};
+
+	char *mode;
+	int i;
+	attribute *attr;
+
+	(void)scope;
+
+	EAT(token_open_paren);
+
+	if(curtok != token_identifier)
+		die_at(NULL, "identifier expected for mode");
+
+	mode = token_current_spel_peek();
+
+	for(i = 0; modes[i].mode[0]; i++)
+		if(!strcmp(mode, modes[i].mode))
+			break;
+
+	if(!modes[i].mode[0])
+		die_at(NULL, "unknown mode \"%s\"", mode);
+
+	EAT(token_identifier);
+	EAT(token_close_paren);
+
+	attr = attribute_new(attr_mode);
+	attr->bits.mode = modes[i].emode;
+	return attr;
+}
+
 #define EMPTY(t)                      \
 static attribute *parse_ ## t()       \
 {                                     \
@@ -256,6 +302,7 @@ static struct
 	ATTR(aligned),
 	ATTR(weak),
 	ATTR(cleanup),
+	ATTR(mode),
 	{ "__ucc_debug", parse_attr_ucc_debug },
 
 	ATTR(cdecl),

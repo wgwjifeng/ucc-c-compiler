@@ -596,7 +596,7 @@ type *type_nav_voidptr(struct type_nav *root)
     return type_ptr_to(type_nav_btype(root, type_void));
 }
 
-type *type_nav_changeauto(type *const ontop, type *trailing)
+type *type_nav_changebtype(type *const ontop, type *trailing)
 {
 	type *base;
 
@@ -604,7 +604,7 @@ type *type_nav_changeauto(type *const ontop, type *trailing)
 		return trailing; /* replace auto with proper trailing type */
 
 	/* use recursion to pop non-btypes on top of trailing */
-	base = type_nav_changeauto(type_next_1(ontop), trailing);
+	base = type_nav_changebtype(type_next_1(ontop), trailing);
 
 	/* pop our type on top of trailing */
 	switch(ontop->type){

@@ -145,6 +145,7 @@ const char *attribute_to_str(attribute *da)
 		CASE_STR_PREFIX(attr, aligned);
 		CASE_STR_PREFIX(attr, weak);
 		CASE_STR_PREFIX(attr, cleanup);
+		CASE_STR_PREFIX(attr, mode);
 		CASE_STR_PREFIX(attr, ucc_debug);
 
 		case attr_call_conv:
@@ -210,6 +211,11 @@ int attribute_equal(attribute *a, attribute *b)
 
 				case attr_call_conv:
 					if(a->bits.conv != b->bits.conv)
+						return 0;
+					break;
+
+				case attr_mode:
+					if(a->bits.mode != b->bits.mode)
 						return 0;
 					break;
 

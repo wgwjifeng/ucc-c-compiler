@@ -682,6 +682,32 @@ static type *parse_btype(
 	}
 }
 
+static type *attr_mode_to_btype(enum attr_mode mode)
+{
+	enum type_primitive p = type_unknown;
+	switch(mode){
+			case mode_QI: p = type_schar; break;
+			case mode_HI: p = type_short; break;
+			case mode_SI: p = type_int; break;
+			case mode_DI: p = type_llong; break;
+
+			case mode_word: p = type_long; break;
+	}
+	return type_nav_btype(cc1_type_nav, p);
+}
+
+static type *check_decl_mode(type *candidate, decl *d)
+{
+	attribute *attr;
+	if((d && (attr = attribute_present(d, attr_mode)))
+	|| (attr = type_attr_present(candidate, attr_mode)))
+	{
+		return type_nav_changebtype(candidate, attr_mode_to_btype(attr->bits.mode));
+	}
+
+	return candidate;
+}
+
 static decl *parse_arg_decl(symtable *scope)
 {
 	/* argument decls can default to int */
@@ -704,6 +730,8 @@ static decl *parse_arg_decl(symtable *scope)
 
 	if(!argdecl)
 		die_at(NULL, "type expected (got %s)", token_to_str(curtok));
+
+	argdecl->ref = check_decl_mode(argdecl->ref, argdecl);
 
 	return argdecl;
 }
@@ -1159,7 +1187,7 @@ static type *parse_type_declarator(
 		return t;
 	}
 
-	return type_nav_changeauto(t, ttrail);
+	return type_nav_changebtype(t, ttrail);
 }
 
 type *parse_type(int newdecl, symtable *scope)
@@ -1185,7 +1213,9 @@ type *parse_type(int newdecl, symtable *scope)
 	if(!btype)
 		return NULL;
 
-	return parse_type_declarator(0, NULL, btype, scope, &try_trail);
+	return check_decl_mode(
+			parse_type_declarator(0, NULL, btype, scope, &try_trail),
+			NULL);
 }
 
 type **parse_type_list(symtable *scope)
@@ -1238,6 +1268,8 @@ static void parsed_decl(decl *d, symtable *scope)
 	where *loc = type_has_loc(d->ref);
 	if(!loc)
 		loc = &d->where;
+
+	d->ref = check_decl_mode(d->ref, d);
 
 	fold_type_w_attr(d->ref, NULL, loc, scope, d->attr);
 }
@@ -1344,9 +1376,12 @@ static decl *parse_decl_stored_aligned(
 				}
 			}
 
-		}else if(is_autotype){
-			warn_at_print_error(&d->where, "__auto_type without initialiser");
-			UCC_ASSERT(!d->ref, "already have decl type?");
+		}else{
+			if(is_autotype){
+				warn_at_print_error(&d->where, "__auto_type without initialiser");
+				UCC_ASSERT(!d->ref, "already have decl type?");
+			}
+			parsed_decl(d, scope);
 		}
 
 		if(!d->ref){
