@@ -171,19 +171,25 @@ void blk_terminate_undef(out_blk *b)
 		b->type = BLK_TERMINAL;
 }
 
-out_blk *out_blk_new_lbl(out_ctx *octx, const char *lbl)
+ucc_nonnull()
+static out_blk *out_blk_new2(char *lbl, const char *desc, where *locn)
 {
 	out_blk *blk = umalloc(sizeof *blk);
-	(void)octx;
-	blk->desc = lbl;
-	blk->lbl = ustrdup(lbl);
+
+	memcpy_safe(&blk->locn, locn);
+	blk->desc = desc;
+	blk->lbl = lbl;
+
 	return blk;
 }
 
-out_blk *out_blk_new(out_ctx *octx, const char *desc)
+out_blk *out_blk_new_lbl(out_ctx *octx, const char *lbl, where *w)
 {
-	out_blk *blk = umalloc(sizeof *blk);
-	blk->desc = desc;
-	blk->lbl = out_label_bblock(octx->nblks++);
-	return blk;
+	(void)octx;
+	return out_blk_new2(ustrdup(lbl), lbl, w);
+}
+
+out_blk *out_blk_new(out_ctx *octx, const char *desc, where *w)
+{
+	return out_blk_new2(out_label_bblock(octx->nblks++), desc, w);
 }

@@ -19,9 +19,9 @@ void gen_stmt_do(stmt *s, out_ctx *octx)
 	const out_val *cond;
 	out_blk *begin;
 
-	begin = out_blk_new(octx, "do_begin");
-	s->blk_continue = out_blk_new(octx, "do_test");
-	s->blk_break = out_blk_new(octx, "do_end");
+	begin = out_blk_new(octx, "do_begin", &s->where);
+	s->blk_continue = out_blk_new(octx, "do_test", &s->expr->where);
+	s->blk_break = out_blk_new(octx, "do_end", &s->expr->where);
 
 	out_ctrl_transfer(octx, begin, NULL, NULL);
 

@@ -25,7 +25,7 @@ void label_makeblk(label *l, out_ctx *octx)
 {
 	if(l->bblock)
 		return;
-	l->bblock = out_blk_new(octx, l->spel);
+	l->bblock = out_blk_new(octx, l->spel, l->pw);
 }
 
 void label_free(label *l)

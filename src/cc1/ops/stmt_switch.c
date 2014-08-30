@@ -223,7 +223,7 @@ void fold_stmt_switch(stmt *s)
 void gen_stmt_switch(stmt *s, out_ctx *octx)
 {
 	stmt **iter, *pdefault;
-	out_blk *blk_switch_end = out_blk_new(octx, "switch_fin");
+	out_blk *blk_switch_end = out_blk_new(octx, "switch_fin", stmt_where_end(s));
 	const out_val *cmp_with;
 
 	s->blk_break = blk_switch_end;
@@ -233,18 +233,18 @@ void gen_stmt_switch(stmt *s, out_ctx *octx)
 	for(iter = s->bits.switch_.cases; iter && *iter; iter++){
 		stmt *cse = *iter;
 		numeric iv;
-		out_blk *blk_cancel = out_blk_new(octx, "case_next");
+		out_blk *blk_cancel = out_blk_new(octx, "case_next", &s->where);
 
 		const_fold_integral(cse->expr, &iv);
 
 		/* create the case blocks here,
 		 * since we need the jumps before we code-gen them */
-		cse->bits.case_blk = out_blk_new(octx, "case");
+		cse->bits.case_blk = out_blk_new(octx, "case", &cse->where);
 
 		if(stmt_kind(cse, case_range)){
 			numeric max;
 			const out_val *this_case[2];
-			out_blk *blk_test2 = out_blk_new(octx, "range_true");
+			out_blk *blk_test2 = out_blk_new(octx, "range_true", &cse->expr2->where);
 
 			/* TODO: proper signed/unsiged format - out_op() */
 			const_fold_integral(cse->expr2, &max);
@@ -284,7 +284,7 @@ void gen_stmt_switch(stmt *s, out_ctx *octx)
 
 	pdefault = s->bits.switch_.default_case;
 	if(pdefault)
-		pdefault->bits.case_blk = out_blk_new(octx, "default");
+		pdefault->bits.case_blk = out_blk_new(octx, "default", &pdefault->where);
 
 	/* no matches - branch to default/end */
 	out_ctrl_transfer(octx,
@@ -292,7 +292,7 @@ void gen_stmt_switch(stmt *s, out_ctx *octx)
 			NULL, NULL);
 
 	{
-		out_blk *body = out_blk_new(octx, "switch_body");
+		out_blk *body = out_blk_new(octx, "switch_body", &s->lhs->where);
 		out_current_blk(octx, body);
 		gen_stmt(s->lhs, octx); /* the actual code inside the switch */
 		out_ctrl_transfer(octx, blk_switch_end, NULL, NULL);

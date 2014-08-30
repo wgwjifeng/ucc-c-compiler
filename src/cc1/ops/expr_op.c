@@ -1051,9 +1051,9 @@ static const out_val *op_shortcircuit(expr *e, out_ctx *octx)
 	out_blk *blk_rhs, *blk_empty, *landing;
 	const out_val *lhs;
 
-	blk_rhs = out_blk_new(octx, "shortcircuit_a");
-	blk_empty = out_blk_new(octx, "shortcircuit_b");
-	landing = out_blk_new(octx, "shortcircuit_landing");
+	blk_rhs = out_blk_new(octx, "shortcircuit_a", &e->rhs->where);
+	blk_empty = out_blk_new(octx, "shortcircuit_b", &e->rhs->where);
+	landing = out_blk_new(octx, "shortcircuit_landing", &e->where);
 
 	lhs = gen_expr(e->lhs, octx);
 	lhs = out_normalise(octx, lhs);
@@ -1093,7 +1093,7 @@ static const out_val *op_shortcircuit(expr *e, out_ctx *octx)
 	}
 }
 
-void gen_op_trapv(type *evaltt, const out_val **eval, out_ctx *octx)
+void gen_op_trapv(type *evaltt, const out_val **eval, out_ctx *octx, where *locn)
 {
 	if((fopt_mode & FOPT_TRAPV) == 0)
 		return;
@@ -1102,8 +1102,8 @@ void gen_op_trapv(type *evaltt, const out_val **eval, out_ctx *octx)
 		return;
 
 	{
-		out_blk *land = out_blk_new(octx, "trapv_end");
-		out_blk *blk_undef = out_blk_new(octx, "travp_bad");
+		out_blk *land = out_blk_new(octx, "trapv_end", locn);
+		out_blk *blk_undef = out_blk_new(octx, "travp_bad", locn);
 
 		out_ctrl_branch(octx,
 				out_new_overflow(octx, eval),
@@ -1147,7 +1147,7 @@ const out_val *gen_expr_op(expr *e, out_ctx *octx)
 		eval = out_change_type(octx, eval, e->tree_type);
 	}
 
-	gen_op_trapv(e->tree_type, &eval, octx);
+	gen_op_trapv(e->tree_type, &eval, octx, &e->where);
 
 	return eval;
 }

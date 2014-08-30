@@ -2,10 +2,12 @@
 #define BLK_H
 
 #include "forwards.h"
+#include "../../util/where.h"
 
 struct out_blk
 {
 	/* all blocks: */
+	struct where locn;
 	const char *desc;
 	char *lbl;
 	char **insns;
@@ -50,7 +52,8 @@ struct out_blk
 	} bits;
 };
 
-out_blk *out_blk_new_lbl(out_ctx *, const char *lbl);
+ucc_nonnull()
+out_blk *out_blk_new_lbl(out_ctx *, const char *lbl, where *);
 
 void blk_flushall(out_ctx *octx, out_blk *first, char *end_dbg_lbl);
 

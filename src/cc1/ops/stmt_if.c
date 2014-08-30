@@ -84,9 +84,10 @@ void fold_stmt_if(stmt *s)
 
 void gen_stmt_if(stmt *s, out_ctx *octx)
 {
-	out_blk *blk_true = out_blk_new(octx, "if_true");
-	out_blk *blk_false = out_blk_new(octx, "if_false");
-	out_blk *blk_fi = out_blk_new(octx, "fi");
+	out_blk *blk_true = out_blk_new(octx, "if_true", &s->lhs->where);
+	out_blk *blk_false = out_blk_new(octx, "if_false",
+			s->rhs ? &s->rhs->where : stmt_where_end(s->lhs));
+	out_blk *blk_fi = out_blk_new(octx, "fi", stmt_where_end(s));
 	const char *el[2];
 	const out_val *cond;
 

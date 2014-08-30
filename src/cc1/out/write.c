@@ -92,6 +92,14 @@ int dbg_add_file(struct out_dbg_filelist **files, const char *nam)
 	return i;
 }
 
+char *dbg_locn_str(struct out_dbg_filelist **files, int idx, where const *w)
+{
+	if(idx == -1)
+		idx = dbg_add_file(files, w->fname);
+
+	return ustrprintf(".loc %d %d %d\n", idx, w->line, w->chr);
+}
+
 void out_dbg_flush(out_ctx *octx, out_blk *blk)
 {
 	/* .file <fileidx> "<name>"
@@ -111,12 +119,7 @@ void out_dbg_flush(out_ctx *octx, out_blk *blk)
 	octx->dbg.last_file = idx;
 	octx->dbg.last_line = octx->dbg.where.line;
 
-	blk_add_insn(
-			blk,
-			ustrprintf(".loc %d %d %d\n",
-				idx,
-				octx->dbg.where.line,
-				octx->dbg.where.chr));
+	blk_add_insn(blk, dbg_locn_str(&octx->dbg.file_head, idx, &octx->dbg.where));
 }
 
 void out_dbg_where(out_ctx *octx, where *w)

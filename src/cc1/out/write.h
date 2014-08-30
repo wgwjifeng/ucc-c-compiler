@@ -28,5 +28,6 @@ void out_asm2(
 void out_dbg_flush(out_ctx *, out_blk *);
 
 int dbg_add_file(struct out_dbg_filelist **files, const char *nam);
+char *dbg_locn_str(struct out_dbg_filelist **files, int idx, where const *w);
 
 #endif

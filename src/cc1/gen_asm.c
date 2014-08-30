@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "../util/util.h"
 #include "../util/dynarray.h"
@@ -194,7 +195,7 @@ static void gen_asm_global(decl *d, out_ctx *octx)
 				auto_space + arg_vla_space,
 				nargs,
 				is_vari = type_is_variadic_func(d->ref),
-				offsets, &d->bits.func.var_offset);
+				offsets, &d->bits.func.var_offset, &d->bits.func.code->where);
 
 		assign_arg_offsets(octx, arg_symtab->decls, offsets);
 
@@ -209,7 +210,14 @@ static void gen_asm_global(decl *d, out_ctx *octx)
 		{
 			char *end = out_dbg_func_end(decl_asm_spel(d));
 			int stack_used;
-			out_func_epilogue(octx, d->ref, end, &stack_used);
+			stmt **si;
+
+			assert(stmt_kind(d->bits.func.code, code));
+			for(si = d->bits.func.code->bits.code.stmts; si && si[1]; si++);
+			if(!si)
+				si = &d->bits.func.code;
+
+			out_func_epilogue(octx, d->ref, end, &stack_used, &(*si)->where);
 			arg_symtab->stack_used = stack_used;
 			free(end);
 		}

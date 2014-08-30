@@ -117,3 +117,16 @@ void stmt_walk(stmt *base, stmt_walk_enter enter, stmt_walk_leave leave, void *d
 
 	stmt_walk2(base, enter, leave, data, &stop);
 }
+
+where *stmt_where_end(stmt *s)
+{
+	if(s->rhs)
+		return stmt_where_end(s->rhs);
+	if(s->lhs)
+		return stmt_where_end(s->lhs);
+
+	if(s->where_cbrace.fname)
+		return &s->where_cbrace;
+
+	return &s->where;
+}

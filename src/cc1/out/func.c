@@ -83,7 +83,7 @@ static void callee_save_or_restore(
 
 void out_func_epilogue(
 		out_ctx *octx, type *ty, char *end_dbg_lbl,
-		int *out_usedstack)
+		int *out_usedstack, where *locn)
 {
 	out_blk *call_save_spill_blk = NULL;
 	out_blk *to_flush;
@@ -94,7 +94,7 @@ void out_func_epilogue(
 	/* must generate callee saves/restores before the
 	 * epilogue or prologue blocks */
 	if(octx->used_callee_saved){
-		call_save_spill_blk = out_blk_new(octx, "call_save");
+		call_save_spill_blk = out_blk_new(octx, "call_save", locn);
 
 		callee_save_or_restore(octx, call_save_spill_blk);
 	}
@@ -158,9 +158,10 @@ void out_func_prologue(
 		out_ctx *octx, const char *sp,
 		type *fnty,
 		int stack_res, int nargs, int variadic,
-		int arg_offsets[], int *local_offset)
+		int arg_offsets[], int *local_offset,
+		where *locn)
 {
-	out_blk *post_prologue = out_blk_new(octx, "post_prologue");
+	out_blk *post_prologue = out_blk_new(octx, "post_prologue", locn);
 
 	octx->current_fnty = fnty;
 
@@ -171,8 +172,8 @@ void out_func_prologue(
 	octx->in_prologue = 1;
 	{
 		assert(!octx->current_blk);
-		octx->first_blk = out_blk_new_lbl(octx, sp);
-		octx->epilogue_blk = out_blk_new(octx, "epilogue");
+		octx->first_blk = out_blk_new_lbl(octx, sp, locn);
+		octx->epilogue_blk = out_blk_new(octx, "epilogue", locn);
 
 		out_current_blk(octx, octx->first_blk);
 

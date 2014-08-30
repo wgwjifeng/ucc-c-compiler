@@ -85,7 +85,8 @@ ucc_wur const out_val *out_call(out_ctx *,
 
 
 /* control flow */
-ucc_wur out_blk *out_blk_new(out_ctx *, const char *desc);
+ucc_nonnull()
+ucc_wur out_blk *out_blk_new(out_ctx *, const char *desc, where *);
 void out_current_blk(out_ctx *, out_blk *) ucc_nonnull((1));
 
 void out_ctrl_end_undefined(out_ctx *);
@@ -114,11 +115,11 @@ void out_func_prologue(
 		out_ctx *, const char *sp,
 		type *fnty,
 		int stack_res, int nargs, int variadic,
-		int arg_offsets[], int *local_offset);
+		int arg_offsets[], int *local_offset, where *);
 
 void out_func_epilogue(
 		out_ctx *, type *, char *end_dbg_lbl,
-		int *out_usedstack);
+		int *out_usedstack, where *);
 
 
 /* returns a pointer to allocated storage: */

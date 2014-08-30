@@ -23,10 +23,10 @@ void fold_stmt_while(stmt *s)
 void gen_stmt_while(stmt *s, out_ctx *octx)
 {
 	const char *endlbls[2];
-	out_blk *blk_body = out_blk_new(octx, "while_body");
+	out_blk *blk_body = out_blk_new(octx, "while_body", &s->lhs->where);
 
-	s->blk_break = out_blk_new(octx, "while_break");
-	s->blk_continue = out_blk_new(octx, "while_cont");
+	s->blk_break = out_blk_new(octx, "while_break", stmt_where_end(s));
+	s->blk_continue = out_blk_new(octx, "while_cont", &s->where);
 
 	out_ctrl_transfer(octx, s->blk_continue, NULL, NULL);
 

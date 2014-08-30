@@ -32,10 +32,10 @@ void fold_stmt_for(stmt *s)
 void gen_stmt_for(stmt *s, out_ctx *octx)
 {
 	const char *el[2];
-	out_blk *blk_test = out_blk_new(octx, "for_test"),
-	        *blk_body = out_blk_new(octx, "for_body"),
-	        *blk_end = out_blk_new(octx, "for_end"),
-	        *blk_inc = out_blk_new(octx, "for_inc");
+	out_blk *blk_test = out_blk_new(octx, "for_test", &s->flow->for_while->where),
+	        *blk_body = out_blk_new(octx, "for_body", &s->lhs->where),
+	        *blk_end = out_blk_new(octx, "for_end", stmt_where_end(s)),
+	        *blk_inc = out_blk_new(octx, "for_inc", &s->flow->for_inc->where);
 
 	flow_gen(s->flow, s->flow->for_init_symtab, el, octx);
 
