@@ -22,6 +22,7 @@
 
 #include "asm.h" /* cc_out */
 #include "../cc1.h" /* fopt_mode */
+#include "write.h" /* dbg_locn_str */
 
 #define JMP_THREAD_LIM 10
 
@@ -31,6 +32,8 @@ struct flush_state
 
 	/* for jump threading - the block we jump to if not immediately flushing */
 	out_blk *jmpto;
+
+	struct out_dbg_filelist **dbg_file_head;
 };
 
 static void blk_jmpnext(out_blk *to, struct flush_state *st)
@@ -71,6 +74,11 @@ static void blk_codegen(out_blk *blk, struct flush_state *st)
 	}
 
 	fprintf(st->f, "%s: # %s\n", blk->lbl, blk->desc);
+	if(cc1_gdebug && (!blk->insns || strstr(blk->insns[0], ".loc") == NULL)){
+		char *locn = dbg_locn_str(st->dbg_file_head, -1, &blk->locn);
+		fprintf(st->f, "%s", locn);
+		free(locn);
+	}
 
 	for(i = blk->insns; i && *i; i++)
 		fprintf(st->f, "%s", *i);
@@ -129,6 +137,7 @@ void blk_flushall(out_ctx *octx, out_blk *first, char *end_dbg_lbl)
 	struct flush_state st = { 0 };
 	out_blk **must_i;
 
+	st.dbg_file_head = &octx->dbg.file_head;
 	st.f = cc_out[SECTION_TEXT];
 	bfs_block(first, &st);
 
