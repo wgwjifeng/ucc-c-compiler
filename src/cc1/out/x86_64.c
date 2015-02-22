@@ -1180,6 +1180,7 @@ static const out_val *x86_check_ivfp(out_ctx *octx, const out_val *from)
 void impl_store(out_ctx *octx, const out_val *to, const out_val *from)
 {
 	char vbuf[VAL_STR_SZ];
+	unsigned sz;
 
 	/* from must be either a reg, value or flag */
 	if(from->type == V_FLAG
@@ -1204,6 +1205,35 @@ void impl_store(out_ctx *octx, const out_val *to, const out_val *from)
 		return;
 	}
 
+	/* if the type size is greater than the word size,
+	 * we need a memcpy */
+	sz = type_size(from->t, NULL);
+	if(sz > platform_word_size()){
+		const out_val *src_tmp;
+
+		switch(from->type){
+			case V_REG_SPILT:
+			case V_REG:
+			case V_LBL:
+				src_tmp = from;
+				break;
+
+			case V_FLAG:
+			case V_CONST_F:
+			case V_CONST_I:
+				out_val_retain(octx, from);
+				src_tmp = v_to(octx, from, TO_MEM);
+				break;
+		}
+
+		out_val_consume(octx, out_memcpy(octx, to, src_tmp, sz));
+
+		if(src_tmp != from)
+			out_val_release(octx, src_tmp);
+
+		goto out;
+	}
+
 	from = v_to(octx, from, TO_REG | TO_CONST);
 	from = x86_check_ivfp(octx, from);
 
@@ -1226,6 +1256,7 @@ void impl_store(out_ctx *octx, const out_val *to, const out_val *from)
 			impl_val_str_r(vbuf, from, 0),
 			impl_val_str(to, 1));
 
+out:
 	out_val_consume(octx, from);
 	out_val_consume(octx, to);
 }
