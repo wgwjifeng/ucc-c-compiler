@@ -1209,27 +1209,52 @@ void impl_store(out_ctx *octx, const out_val *to, const out_val *from)
 	 * we need a memcpy */
 	sz = type_size(from->t, NULL);
 	if(sz > platform_word_size()){
+		int release_src_tmp = 0;
 		const out_val *src_tmp;
 
 		switch(from->type){
 			case V_REG_SPILT:
 			case V_REG:
 			case V_LBL:
-				src_tmp = from;
+				// hi
+				src_tmp = out_val_retain(octx, from);
 				break;
 
 			case V_FLAG:
 			case V_CONST_F:
 			case V_CONST_I:
+			{
+				/* push to temporary memory */
+				const out_val *lower, *higher;
+				const out_val *from_lower;
+				type *half_ty, *full_ty;
+
+				assert(sz == 2 * platform_word_size());
+				half_ty = type_nav_btype(cc1_type_nav, type_long);
+				full_ty = from->t;
+
+				src_tmp = out_aalloct(octx, full_ty);
+				release_src_tmp = 1;
+				lower = out_val_retain(octx, src_tmp);
+
+				out_val_retain(octx, src_tmp);
+				higher = out_change_type(octx,
+						out_op(octx, op_plus,
+							out_change_type(octx, src_tmp, half_ty),
+							out_new_l(octx, half_ty, sz / 2)),
+						type_ptr_to(full_ty));
+
+				out_store(octx, higher, out_new_zero(octx, half_ty));
+
+				/* truncate literal to 8-bytes and store */
 				out_val_retain(octx, from);
-				src_tmp = v_to(octx, from, TO_MEM);
+				from_lower = out_change_type(octx, from, half_ty);
+				out_store(octx, lower, from_lower);
 				break;
+			}
 		}
 
 		out_val_consume(octx, out_memcpy(octx, to, src_tmp, sz));
-
-		if(src_tmp != from)
-			out_val_release(octx, src_tmp);
 
 		goto out;
 	}
