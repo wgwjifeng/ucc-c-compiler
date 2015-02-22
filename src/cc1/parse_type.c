@@ -241,6 +241,7 @@ int parse_at_decl(symtable *scope, int include_attribute)
 		case token_typeof:
 		case token___auto_type:
 		case token___builtin_va_list:
+		case token___int128:
 		case token__Alignas:
 			return 1;
 
@@ -623,11 +624,13 @@ static type *parse_btype(
 				case type_ushort:
 				case type_ulong:
 				case type_ullong:
+				case type_u__int128:
 					ICE("parsed unsigned type?");
 				case type_int:
 				case type_short:
 				case type_long:
 				case type_llong:
+				case type___int128:
 					if(!is_signed)
 						primitive = TYPE_PRIMITIVE_TO_UNSIGNED(primitive);
 					break;

@@ -98,6 +98,7 @@ static const struct keyword
 	KEYWORD(KW_ALL, _Static_assert),
 
 	KEYWORD(KW_ALL, __builtin_va_list),
+	KEYWORD(KW_ALL, __int128),
 	KEYWORD(KW_ALL, __auto_type),
 
 	KEYWORD(KW_ALL, __extension__),

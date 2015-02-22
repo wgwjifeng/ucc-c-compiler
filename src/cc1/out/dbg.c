@@ -512,6 +512,7 @@ static struct DIE *dwarf_basetype(struct DIE_compile_unit *cu, type *ty)
 		case type_int:
 		case type_long:
 		case type_llong:
+		case type___int128:
 			enc = DW_ATE_signed;
 			break;
 
@@ -519,6 +520,7 @@ static struct DIE *dwarf_basetype(struct DIE_compile_unit *cu, type *ty)
 		case type_uint:
 		case type_ulong:
 		case type_ullong:
+		case type_u__int128:
 			enc = DW_ATE_unsigned;
 			break;
 
