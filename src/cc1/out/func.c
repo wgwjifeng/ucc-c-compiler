@@ -7,6 +7,8 @@
 #include "../type_nav.h"
 #include "../type_is.h"
 #include "../pack.h"
+#include "../mangle.h"
+#include "../funcargs.h"
 
 #include "val.h"
 #include "out.h" /* this file defs */
@@ -91,6 +93,86 @@ static void callee_save_or_restore(
 	out_val_release(octx, stack_locn);
 }
 
+static const out_val *out_chk_guard(out_ctx *octx)
+{
+	const char *stack_chk_guard = "__stack_chk_guard@GOTPCREL";
+	char *mangled = func_mangle(stack_chk_guard, NULL);
+	type *intptr_ty = type_nav_btype(cc1_type_nav, type_intptr_t);
+	const out_val *pulled;
+
+	pulled = out_deref(
+			octx, out_new_lbl(
+				octx,
+				type_ptr_to(type_ptr_to(intptr_ty)),
+				mangled, 1));
+
+	if(mangled != stack_chk_guard)
+		free(mangled);
+
+	return pulled;
+}
+
+static const out_val *out_chk_fail_fn(
+		out_ctx *octx, type *fnty_ptr, char **const tofree)
+{
+	const char *chk_fail = "__stack_chk_fail";
+	char *mangled = func_mangle(chk_fail, NULL);
+
+	if(mangled == chk_fail)
+		*tofree = NULL;
+	else
+		*tofree = mangled;
+
+	return out_new_lbl(octx, fnty_ptr, mangled, 0);
+}
+
+static void out_init_stack_protector(
+		out_ctx *octx, const out_val *stack_prot_slot)
+{
+	const out_val *chk_guard = out_chk_guard(octx);
+
+	octx->stack_protector_ent = out_val_retain(octx, stack_prot_slot);
+
+	out_store(octx, stack_prot_slot, out_deref(octx, chk_guard));
+}
+
+static void out_check_stack_protector(out_ctx *octx)
+{
+	const out_val *sp_val;
+	const out_val *cond;
+	out_blk *bok, *bsmashed;
+
+	if(!octx->stack_protector_ent)
+		return;
+
+	bok = out_blk_new(octx, "stack_prot_ok");
+	bsmashed = out_blk_new(octx, "stack_prot_fail");
+
+	sp_val = out_deref(octx, /*released:*/octx->stack_protector_ent);
+	octx->stack_protector_ent = NULL;
+
+	cond = out_op(octx, op_eq, sp_val, out_deref(octx, out_chk_guard(octx)));
+	out_ctrl_branch(octx, cond, bok, bsmashed);
+
+	out_current_blk(octx, bsmashed);
+	{
+		type *fnty = type_ptr_to(
+				type_func_of(
+				type_nav_btype(cc1_type_nav, type_void),
+				funcargs_new_void(),
+				NULL));
+		char *tofree;
+		const out_val *fn = out_chk_fail_fn(octx, fnty, &tofree);
+
+		out_val_consume(octx, out_call(octx, fn, NULL, fnty));
+		out_ctrl_end_undefined(octx);
+
+		free(tofree);
+	}
+
+	out_current_blk(octx, bok);
+}
+
 void out_func_epilogue(
 		out_ctx *octx, type *ty, char *end_dbg_lbl,
 		int *out_usedstack)
@@ -124,6 +206,8 @@ void out_func_epilogue(
 
 	out_current_blk(octx, octx->epilogue_blk);
 	{
+		out_check_stack_protector(octx);
+
 		impl_func_epilogue(octx, ty, octx->used_stack);
 		/* terminate here without an insn */
 		assert(octx->current_blk->type == BLK_UNINIT);
@@ -222,7 +306,7 @@ static void stack_realign(out_ctx *octx, unsigned align)
 void out_func_prologue(
 		out_ctx *octx, const char *sp,
 		type *fnty,
-		int nargs, int variadic,
+		int nargs, int variadic, int stack_protector,
 		const out_val *argvals[])
 {
 	out_blk *post_prologue = out_blk_new(octx, "post_prologue");
@@ -236,6 +320,8 @@ void out_func_prologue(
 
 	octx->in_prologue = 1;
 	{
+		const out_val *stack_prot_slot = NULL;
+
 		assert(!octx->current_blk);
 		octx->first_blk = out_blk_new_lbl(octx, sp);
 		octx->epilogue_blk = out_blk_new(octx, "epilogue");
@@ -243,6 +329,12 @@ void out_func_prologue(
 		out_current_blk(octx, octx->first_blk);
 
 		impl_func_prologue_save_fp(octx);
+
+		if(stack_protector){
+			type *intptr_ty = type_nav_btype(cc1_type_nav, type_intptr_t);
+
+			stack_prot_slot = out_aalloct(octx, type_ptr_to(type_ptr_to(intptr_ty)));
+		}
 
 		if(mopt_mode & MOPT_STACK_REALIGN)
 			stack_realign(octx, cc1_mstack_align);
@@ -255,6 +347,11 @@ void out_func_prologue(
 		/* setup "pointers" to the right place in the stack */
 		octx->stack_variadic_offset = octx->cur_stack_sz;
 		octx->initial_stack_sz = octx->cur_stack_sz;
+
+		if(stack_prot_slot){
+			/* now all registers are safe, init stack protector */
+			out_init_stack_protector(octx, stack_prot_slot);
+		}
 	}
 	octx->in_prologue = 0;
 
