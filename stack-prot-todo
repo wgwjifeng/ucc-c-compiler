@@ -1,2 +1,7 @@
 preserve return value (inc. stret)
 -fstack-protector-all
+
+__SSP__          defined (as 1) with -fstack-protector
+__SSP_ALL__      defined (as 2) with -fstack-protector-all
+__SSP_STRONG__   defined (as 3) with -fstack-protector-strong
+__SSP_EXPLICIT__ defined (as 4) with -fstack-protector-explicit
