@@ -14,9 +14,9 @@ struct attribute
 
 	enum attribute_type
 	{
-#define NAME(x) attr_ ## x,
-#define ALIAS(s, x) attr_ ## x,
-#define EXTRA_ALIAS(s, x)
+#define NAME(x, cat) attr_ ## x,
+#define ALIAS(s, x, cat) attr_ ## x,
+#define EXTRA_ALIAS(s, x, cat)
 		ATTRIBUTES
 #undef NAME
 #undef ALIAS
