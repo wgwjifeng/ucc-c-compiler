@@ -168,13 +168,15 @@ const char *attribute_to_str(attribute *da)
 void attribute_free(attribute *a)
 {
 	attribute *i;
+
 	if(!a)
 		return;
 
-	for(i = a->next; i; i = i->next)
+	for(i = a; i; ){
+		attribute *next = i->next;
 		RELEASE(i);
-
-	free(a);
+		i = next;
+	}
 }
 
 int attribute_equal(attribute *a, attribute *b)
