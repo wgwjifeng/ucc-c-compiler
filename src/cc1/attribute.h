@@ -75,4 +75,16 @@ int attribute_equal(attribute *, attribute *);
 void attribute_free(struct attribute *a);
 void attribute_debug_check(struct attribute *attr);
 
+
+int attribute_verify_cat(
+		enum attribute_category current,
+		enum attribute_category constraint,
+		where *loc);
+
+attribute *attribute_verify_type(
+		attribute *attr, type *ty) ucc_wur;
+
+attribute *attribute_verify_decl(
+		attribute *attr, struct decl *d) ucc_wur;
+
 #endif

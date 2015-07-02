@@ -265,10 +265,11 @@ static struct
 {
 	const char *ident;
 	attribute *(*parser)(symtable *, const char *ident);
+	enum attribute_category category;
 } attrs[] = {
-#define NAME(x, cat) { #x, parse_attr_ ## x },
-#define ALIAS(s, x, cat) { s, parse_attr_ ## x },
-#define EXTRA_ALIAS(s, x, cat) { s, parse_attr_ ## x},
+#define NAME(x, cat) { #x, parse_attr_ ## x, cat },
+#define ALIAS(s, x, cat) { s, parse_attr_ ## x, cat },
+#define EXTRA_ALIAS(s, x, cat) { s, parse_attr_ ## x, cat },
 	ATTRIBUTES
 #undef NAME
 #undef ALIAS
@@ -295,7 +296,8 @@ static void parse_attr_bracket_chomp(int had_open_paren)
 	}
 }
 
-static attribute *parse_attr_single(const char *ident, symtable *scope)
+static attribute *parse_attr_single(
+		const char *ident, symtable *scope, enum attribute_category category)
 {
 	symtable_global *glob;
 	int i;
@@ -305,7 +307,21 @@ static attribute *parse_attr_single(const char *ident, symtable *scope)
 		if(!strcmp(attrs[i].ident, ident)
 		|| (snprintf(buf, sizeof buf, "__%s__", attrs[i].ident), !strcmp(buf, ident)))
 		{
-			return attrs[i].parser(scope, attrs[i].ident);
+			where loc;
+			attribute *parsed;
+
+			/*fprintf(stderr, "parsing %s, wanted_cat=%#x attrs[i].cat=%#x\n",
+					ident, category, attrs[i].category);*/
+
+			where_cc1_current(&loc);
+			parsed = attrs[i].parser(scope, attrs[i].ident);
+
+			if(!attribute_verify_cat(attrs[i].category, category, &loc)){
+				attribute_free(parsed);
+				parsed = NULL;
+			}
+
+			return parsed;
 		}
 	}
 
@@ -331,7 +347,7 @@ static attribute *parse_attr_single(const char *ident, symtable *scope)
 	return NULL;
 }
 
-attribute *parse_attr(symtable *scope)
+attribute *parse_attr(symtable *scope, enum attribute_category category)
 {
 	attribute *attr = NULL, **next = &attr;
 
@@ -355,7 +371,7 @@ attribute *parse_attr(symtable *scope)
 
 		EAT(curtok);
 
-		if((this = *next = parse_attr_single(ident, scope))){
+		if((this = *next = parse_attr_single(ident, scope, category))){
 			memcpy_safe(&this->where, &w);
 			next = &(*next)->next;
 		}

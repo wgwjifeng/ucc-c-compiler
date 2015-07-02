@@ -11,6 +11,9 @@
 #include "sue.h"
 #include "decl.h"
 #include "expr.h"
+#include "warn.h"
+
+#include "type_is.h"
 
 #include "macros.h"
 
@@ -264,4 +267,80 @@ void attribute_debug_check(struct attribute *attr)
 			warn_at(&attr->where, "debug attribute handled");
 		}
 	}
+}
+
+static enum attribute_category attribute_category(attribute *attr)
+{
+	switch(attr->type){
+#define NAME(nam, cat) case attr_ ## nam: return cat;
+#define ALIAS(spel, nam, cat) NAME(nam, cat)
+#define EXTRA_ALIAS(spel, nam, cat)
+		ATTRIBUTES
+#undef NAME
+#undef ALIAS
+#undef EXTRA_ALIAS
+
+		case attr_LAST:
+			break;
+	}
+	assert(0);
+	return attribute_cat_any;
+}
+
+int attribute_verify_cat(
+		enum attribute_category current,
+		enum attribute_category constraint,
+		where *loc)
+{
+	int is_okay = !!(current & constraint);
+
+	if(!is_okay)
+		cc1_warn_at(loc, ignored_attribute, "ignoring attribute");
+
+	return is_okay;
+}
+
+attribute *attribute_verify_type(attribute *attr, type *ty)
+{
+	attribute *i;
+	enum attribute_category constraint = 0;
+	attribute *prev = NULL;
+
+	if(type_is(ty, type_func))
+		constraint = attribute_cat_type_funconly;
+	else if(type_is_s_or_u(ty))
+		constraint = attribute_cat_type_structonly;
+	else if(type_is_ptr(ty))
+		constraint = attribute_cat_type_ptronly;
+	else if(type_is_enum(ty))
+		constraint = attribute_cat_type_enumonly;
+	else
+		constraint = attribute_cat_type;
+
+	for(i = attr; i; i = i->next){
+		int is_okay = attribute_verify_cat(
+				attribute_category(i), constraint, &i->where);
+
+		if(!is_okay){
+			if(prev){
+				prev->next = i->next;
+			}else{
+				attr = i->next;
+			}
+
+			i->next = NULL;
+			RELEASE(i);
+		}
+	}
+
+	return attr;
+}
+
+attribute *attribute_verify_decl(attribute *attr, decl *d)
+{
+#warning todo
+	// need to free if bad
+	(void)d;
+
+	return attribute_verify_type(attr, d->ref);
 }

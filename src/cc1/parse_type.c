@@ -62,7 +62,7 @@ static type *parse_type_sue(
 	where sue_loc;
 
 	/* struct __attr__(()) name { ... } ... */
-	parse_add_attr(&this_sue_attr, scope);
+	parse_add_attr(&this_sue_attr, scope, attribute_cat_type_structonly);
 
 	where_cc1_current(&sue_loc);
 
@@ -92,7 +92,7 @@ static type *parse_type_sue(
 				sp = token_current_spel();
 				EAT(token_identifier);
 
-				parse_add_attr(&en_attr, scope);
+				parse_add_attr(&en_attr, scope, attribute_cat_type_enumentonly);
 
 				if(accept(token_assign))
 					e = PARSE_EXPR_CONSTANT(scope, 0); /* no commas */
@@ -146,14 +146,27 @@ static type *parse_type_sue(
 
 	}else if(!spel){
 		die_at(NULL, "expected: %s definition or name", sue_str_type(prim));
+
+	}else{
+		/* no open block - drop attributes */
+		if(this_sue_attr){
+			cc1_warn_at(NULL,
+					ignored_attribute,
+					"ignoring attributes on non-%s-definition",
+					sue_str_type(prim));
+
+			attribute_free(this_sue_attr);
+			this_sue_attr = NULL;
+		}
 	}
 
 	/* struct A { ... } __attr__
 	 *
 	 * - struct is incomplete before this point, so we handle the
 	 *   attributes before sue_decl()
+	 * - these attributes also relate to the type
 	 */
-	parse_add_attr(&this_sue_attr, scope);
+	parse_add_attr(&this_sue_attr, scope, attribute_cat_type_structonly);
 
 	{
 		/* struct [tag] <name | '{' | ';'>
@@ -183,7 +196,8 @@ static type *parse_type_sue(
 }
 
 static void parse_add_attr_out(
-		attribute **append, symtable *scope, int *got_kw)
+		attribute **append, symtable *scope,
+		enum attribute_category cat, int *got_kw)
 {
 	if(got_kw)
 		*got_kw = 0;
@@ -197,16 +211,17 @@ static void parse_add_attr_out(
 		EAT(token_open_paren);
 
 		if(curtok != token_close_paren)
-			attribute_append(append, parse_attr(scope));
+			attribute_append(append, parse_attr(scope, cat));
 
 		EAT(token_close_paren);
 		EAT(token_close_paren);
 	}
 }
 
-void parse_add_attr(attribute **append, symtable *scope)
+void parse_add_attr(
+		attribute **append, symtable *scope, enum attribute_category cat)
 {
-	parse_add_attr_out(append, scope, NULL);
+	parse_add_attr_out(append, scope, cat, NULL);
 }
 
 static decl *parse_at_tdef(symtable *scope)
@@ -296,12 +311,16 @@ static type *parse_btype_end(
 		type *btype, enum type_qualifier qual, int is_noreturn,
 		attribute *attr, symtable *scope, where *w)
 {
-	parse_add_attr(&attr, scope); /* int/struct-A __attr__ */
+	/* verified below */
+	parse_add_attr(&attr, scope, attribute_cat_any); /* int/struct-A __attr__ */
 
 	btype = type_qualify(btype, qual);
 
 	if(is_noreturn)
 		attribute_append(&attr, attribute_new(attr_noreturn));
+
+	/* ensure we can attach this attribute to the type */
+	attr = attribute_verify_type(attr, btype);
 
 	btype = type_attributed(btype, attr);
 	RELEASE(attr);
@@ -535,7 +554,8 @@ static type *parse_btype(
 			EAT(token_identifier);
 
 		}else if(curtok == token_attribute){
-			parse_add_attr(&attr, scope); /* __attr__ int ... */
+			/* verified in parse_btype_end() */
+			parse_add_attr(&attr, scope, attribute_cat_any); /* __attr__ int ... */
 			may_default_type = 1;
 			/*
 			 * can't depend on !!attr, since it is null when:
@@ -941,7 +961,8 @@ static type_parsed *parsed_type_nest(
 		}
 
 		/* int (__attribute(()) f)() ... */
-		parse_add_attr(&attr, scope);
+		parse_add_attr(&attr, scope,
+				attribute_cat_type_funconly | attribute_cat_decl_funconly);
 
 		ret = parsed_type_declarator(mode, dfor, base, scope);
 
@@ -1094,7 +1115,7 @@ static type_parsed *parsed_type_ptr(
 
 		while(curtok_is_type_qual() || curtok == token_attribute){
 			if(curtok == token_attribute){
-				parse_add_attr(&attr, scope);
+				parse_add_attr(&attr, scope, attribute_cat_type_ptronly);
 			}else{
 				qual |= curtok_to_type_qualifier();
 				EAT(curtok);
@@ -1347,7 +1368,7 @@ static decl *parse_decl_stored_aligned(
 	d->store = store; /* set early for parse_type_declarator() */
 
 	/* int __attr__ spel, __attr__ spel2, ... */
-	parse_add_attr(&d->attr, scope);
+	parse_add_attr(&d->attr, scope, attribute_cat_decl);
 
 	if(is_autotype){
 		d->spel = token_current_spel();
@@ -1387,7 +1408,9 @@ static decl *parse_decl_stored_aligned(
 	if(is_autotype || !type_is(d->ref, type_func)){
 		/* parse __asm__ naming before attributes, as per gcc and clang */
 		parse_add_asm(d);
-		parse_add_attr(&d->attr, scope); /* int spel __attr__ */
+
+		/* int spel __attr__ */
+		parse_add_attr(&d->attr, scope, attribute_cat_decl_varonly);
 
 		/* now we have attributes, etc... */
 		parsed_decl(d, scope, is_arg);
@@ -1511,7 +1534,9 @@ decl *parse_decl(
 	enum parse_btype_flags flags = PARSE_BTYPE_AUTOTYPE;
 	int got_attr;
 
-	parse_add_attr_out(&decl_attr, scope, &got_attr);
+#warning todo
+	parse_add_attr_out(&decl_attr, scope, attribute_cat_any, &got_attr);
+
 	if(got_attr)
 		flags |= PARSE_BTYPE_DEFAULT_INT;
 
@@ -1531,6 +1556,8 @@ decl *parse_decl(
 	}else{
 		prevent_typedef(store);
 	}
+
+	decl_attr = attribute_verify_type(decl_attr, bt);
 
 	d = parse_decl_stored_aligned(
 			type_attributed(bt, decl_attr),
@@ -1866,7 +1893,7 @@ static void parse_post_func(decl *d, symtable *in_scope, int had_post_attr)
 
 		parse_add_asm(d);
 
-		parse_add_attr(&d->attr, in_scope);
+		parse_add_attr(&d->attr, in_scope, attribute_cat_decl_funconly);
 	}
 
 	if(is_old_func(d)){
@@ -2043,7 +2070,9 @@ static int parse_decl_attr(decl *d, symtable *scope)
 		/* add to .ref, since this is what is checked
 		 * when the function decays to a pointer */
 		attribute *a = NULL;
-		parse_add_attr(&a, scope);
+		parse_add_attr(&a, scope,
+				attribute_cat_decl_funconly | attribute_cat_type_funconly);
+
 		d->ref = type_attributed(d->ref, a);
 		RELEASE(a);
 		return 1;
@@ -2071,7 +2100,8 @@ int parse_decl_group(
 
 	UCC_ASSERT(add_to_scope || pdecls, "what shall I do?");
 
-	parse_add_attr_out(&decl_attr, in_scope, &got_attr);
+	parse_add_attr_out(&decl_attr, in_scope, attribute_cat_any, &got_attr);
+
 	if(got_attr)
 		flags |= PARSE_BTYPE_DEFAULT_INT;
 
@@ -2117,6 +2147,8 @@ int parse_decl_group(
 
 		(void)RETAIN(decl_attr);
 		if(d->spel){
+			decl_attr = attribute_verify_decl(decl_attr, d);
+
 			d->ref = type_attributed(d->ref, decl_attr);
 		}else{
 			unused_attribute(d, decl_attr);
