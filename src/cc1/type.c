@@ -564,6 +564,9 @@ static void type_add_str(
 			/* tdef "aka: %s" handled elsewhere */
 		case type_attr:
 			/* attribute not handled here */
+			BUF_ADD(" __attribute__((%s))", attribute_to_str(r->bits.attr));
+			break;
+
 		case type_btype:
 		case type_cast:
 		case type_where:
