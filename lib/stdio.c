@@ -37,6 +37,15 @@ struct __FILE
 	char *buf_write_p, *buf_read_p;
 	*/
 };
+
+struct memopen_state
+{
+	void *buf;
+	size_t sz;
+	size_t off;
+	int is_binary;
+};
+
 #define FILE_INIT(_fd) { .status = file_status_fine, .fd = _fd }
 
 static FILE _stdin  = FILE_INIT(0);
