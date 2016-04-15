@@ -31,12 +31,18 @@ void include_add_dir(char *d, int system)
 
 int include_is_sysheader(const char *d)
 {
+	fprintf(stderr, "\e[1;35mIN SYSH(%s): ", d);
+
 	struct include_ent **i;
 	for(i = include_dirs; i && *i; i++){
 		struct include_ent *ent = *i;
-		if(ent->issys && !strcmp(d, ent->dir))
+		fprintf(stderr, "strcmp('%s', '%s')\n", d, ent->dir);
+		if(ent->issys && !strcmp(d, ent->dir)){
+			fprintf(stderr, "1\e[m\n");
 			return 1;
+		}
 	}
+			fprintf(stderr, "0\e[m\n");
 	return 0;
 }
 
