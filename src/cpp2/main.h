@@ -47,6 +47,8 @@ void debug_pop_line(void);
 
 void trace(const char *, ...);
 
+int cpp_in_sys_header(void);
+
 extern enum wmode
 {
 	WTRADITIONAL = 1 << 0,

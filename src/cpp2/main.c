@@ -135,6 +135,15 @@ void trace(const char *fmt, ...)
 	va_end(l);
 }
 
+int cpp_in_sys_header(void)
+{
+	const char *fname = (file_stack_idx >= 0
+			? file_stack[file_stack_idx].fname
+			: current_fname);
+
+	return include_is_sysheader(fname);
+}
+
 void debug_push_line(char *s)
 {
 	debug_pop_line(); /* currently only a single level */
