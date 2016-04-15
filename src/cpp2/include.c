@@ -14,11 +14,30 @@
 #include "main.h"
 #include "preproc.h"
 
-static char **include_dirs;
-
-void include_add_dir(char *d)
+static struct include_ent
 {
-	dynarray_add(&include_dirs, d);
+	char *dir;
+	int issys;
+} **include_dirs;
+
+void include_add_dir(char *d, int system)
+{
+	struct include_ent *ent = umalloc(sizeof *ent);
+	ent->dir = d;
+	ent->issys = system;
+
+	dynarray_add(&include_dirs, ent);
+}
+
+int include_is_sysheader(const char *d)
+{
+	struct include_ent **i;
+	for(i = include_dirs; i && *i; i++){
+		struct include_ent *ent = *i;
+		if(ent->issys && !strcmp(d, ent->dir))
+			return 1;
+	}
+	return 0;
 }
 
 FILE *include_fopen(const char *fnam)
@@ -53,11 +72,11 @@ retry:
 		if(cd){
 			path = ustrprintf(
 					"%s/%s/%s",
-					*include_dirs[i] == '/' ? "" : cd,
-					include_dirs[i],
+					*include_dirs[i]->dir == '/' ? "" : cd,
+					include_dirs[i]->dir,
 					fnam);
 		}else{
-			path = ustrprintf("%s/%s", include_dirs[i], fnam);
+			path = ustrprintf("%s/%s", include_dirs[i]->dir, fnam);
 		}
 
 		trace("  trying %s...\n", path);

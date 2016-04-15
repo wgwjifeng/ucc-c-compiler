@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 		switch(argv[i][1]){
 			case 'I':
 				if(argv[i][2])
-					include_add_dir(argv[i]+2);
+					include_add_dir(argv[i]+2, 0);
 				else
 					goto usage;
 				break;
@@ -442,7 +442,14 @@ int main(int argc, char **argv)
 
 			default:
 defaul:
-				if(std_from_str(argv[i], &cpp_std, NULL) == 0){
+				if(!strcmp(argv[i], "-isystem")){
+					i++;
+					if(!argv[i]){
+						fprintf(stderr, "argument expected for -isystem");
+						goto usage;
+					}
+					include_add_dir(argv[i], 1);
+				}else if(std_from_str(argv[i], &cpp_std, NULL) == 0){
 					/* we have an std */
 				}else if(!strcmp(argv[i], "-trigraphs")){
 					option_trigraphs = 1;
@@ -555,6 +562,7 @@ usage:
 	fprintf(stderr, "Usage: %s [options] files...\n", *argv);
 	fputs(" Options:\n"
 				"  -Idir: Add search directory\n"
+				"  -isystem: Add system search directory\n"
 				"  -Dxyz[=abc]: Define xyz (to equal abc)\n"
 				"  -Uxyz: Undefine xyz\n"
 				"  -o output: output file\n"
