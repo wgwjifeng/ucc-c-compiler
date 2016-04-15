@@ -58,12 +58,14 @@ FILE *include_fopen(const char *fnam)
 	return NULL;
 }
 
-FILE *include_search_fopen(const char *cd, const char *fnam, char **ppath)
+FILE *include_search_fopen(const char *cd, const char *fnam, char **const ppath)
 {
 	FILE *f = NULL;
 	int i;
 
 	trace("include \"%s\", cd=%s\n", fnam, cd);
+
+	*ppath = NULL;
 
 retry:
 	for(i = 0; include_dirs && include_dirs[i]; i++){
