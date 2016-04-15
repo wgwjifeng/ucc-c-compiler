@@ -304,6 +304,7 @@ static void handle_include(char *include_arg)
 				goto out;
 			}
 		}
+		assert(final_path);
 	}
 
 	/* successfully opened */
