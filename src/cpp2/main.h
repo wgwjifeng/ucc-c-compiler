@@ -30,17 +30,18 @@ extern struct loc loc_tok;
 /* bit of a hack, as we've already
  * incremented current_line when we
  * reach the die() call */
-#define CPP_X(wm, f, ...)      \
+#define CPP_X(wm, die, f, ...) \
   do{                          \
-    if(wm == 0 || wm & wmode){ \
+    if(die || wm & wmode){     \
       current_line--;          \
-      f(NULL, __VA_ARGS__);    \
+      if(die || !cpp_in_sys_header()) \
+        f(NULL, __VA_ARGS__);  \
       current_line++;          \
     }                          \
   }while(0)
 
-#define CPP_WARN(wm, ...) CPP_X(wm, warn_at, __VA_ARGS__)
-#define CPP_DIE(... )     CPP_X(0,  die_at,  __VA_ARGS__)
+#define CPP_WARN(wm, ...) CPP_X(wm, 0, warn_at, __VA_ARGS__)
+#define CPP_DIE(... )     CPP_X(0,  1, die_at,  __VA_ARGS__)
 
 void debug_push_line(char *);
 void debug_pop_line(void);
