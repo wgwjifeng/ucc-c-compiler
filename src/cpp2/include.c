@@ -44,7 +44,7 @@ FILE *include_search_fopen(const char *cd, const char *fnam, char **ppath)
 	FILE *f = NULL;
 	int i;
 
-	trace("include \"%s\", cd=%s", fnam, cd);
+	trace("include \"%s\", cd=%s\n", fnam, cd);
 
 retry:
 	for(i = 0; include_dirs && include_dirs[i]; i++){
