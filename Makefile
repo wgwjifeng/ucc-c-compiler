@@ -20,9 +20,4 @@ cleanall: clean
 check: all
 	cd test && ./run_tests -q -i ignores .
 
-ALL_SRC = $(shell find . -iname '*.[ch]')
-
-tags: ${ALL_SRC}
-	ctags -R .
-
 .PHONY: all clean cleanall src
