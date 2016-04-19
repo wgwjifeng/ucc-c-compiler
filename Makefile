@@ -17,13 +17,8 @@ clean:
 cleanall: clean
 	./configure clean
 
-cleantest:
-	make -Ctest clean
-# no need to clean test2
-
 check: all
-	cd test2; ./run_tests -q -i ignores .
-	# test/ pending
+	cd test && ./run_tests -q -i ignores .
 
 ALL_SRC = $(shell find . -iname '*.[ch]')
 
