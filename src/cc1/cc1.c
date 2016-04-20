@@ -43,7 +43,7 @@ static struct
 {
 	char type;
 	const char *arg;
-	int mask;
+	unsigned long mask;
 } fopts[] = {
 	{ 'f',  "enable-asm",    FOPT_ENABLE_ASM      },
 	{ 'f',  "const-fold",    FOPT_CONST_FOLD      },
@@ -103,7 +103,7 @@ FILE *cc_out[NUM_SECTIONS];     /* temporary section files */
 FILE *cc1_out;                  /* final output */
 char *cc1_first_fname;
 
-enum fopt fopt_mode = FOPT_CONST_FOLD
+unsigned long fopt_mode = FOPT_CONST_FOLD
                     | FOPT_SHOW_LINE
                     | FOPT_PIC
                     | FOPT_BUILTIN
@@ -118,7 +118,7 @@ enum fopt fopt_mode = FOPT_CONST_FOLD
 
 enum cc1_backend cc1_backend = BACKEND_ASM;
 
-enum mopt mopt_mode = 0;
+unsigned long mopt_mode = 0;
 enum san_opts cc1_sanitize = 0;
 char *cc1_sanitize_handler_fn;
 
@@ -148,7 +148,7 @@ static FILE *infile;
 /* compile time check for enum <-> int compat */
 #define COMP_CHECK(pre, test) \
 struct unused_ ## pre { char check[test ? -1 : 1]; }
-COMP_CHECK(b, sizeof fopt_mode != sizeof(int));
+COMP_CHECK(b, sizeof fopt_mode != sizeof(long));
 
 
 static void ccdie(int verbose, const char *fmt, ...)
@@ -533,7 +533,7 @@ int main(int argc, char **argv)
 		&& (argv[i][1] == 'W' || argv[i][1] == 'f' || argv[i][1] == 'm')){
 			const char arg_ty = argv[i][1];
 			char *arg = argv[i] + 2;
-			int *mask;
+			unsigned long *mask;
 			int j, found, rev;
 
 			rev = found = 0;
@@ -583,10 +583,10 @@ int main(int argc, char **argv)
 
 			switch(arg_ty){
 				case 'f':
-					mask = (int *)&fopt_mode;
+					mask = &fopt_mode;
 					break;
 				case 'm':
-					mask = (int *)&mopt_mode;
+					mask = &mopt_mode;
 					break;
 				default:
 					ucc_unreach(1);
@@ -601,7 +601,7 @@ int main(int argc, char **argv)
 					/* if the mask isn't a single bit, treat it as
 					 * an unmask, e.g. -funsigned-char unmasks FOPT_SIGNED_CHAR
 					 */
-					const int unmask = fopts[j].mask & (fopts[j].mask - 1);
+					const unsigned long unmask = fopts[j].mask & (fopts[j].mask - 1);
 
 					if(rev){
 						if(unmask)
