@@ -420,6 +420,9 @@ void fold_sue(struct_union_enum_st *const sue, symtable *stab)
 
 		memset(&bitfield, 0, sizeof bitfield);
 
+		if(fopt_mode & FOPT_DUMP_STRUCT_LAYOUT)
+			printf("\t0\t| %s %s\n", sue_str(sue), sue->spel);
+
 		for(i = sue->members; i && *i; i++){
 			decl *d = (*i)->struct_member;
 			struct_union_enum_st *sub_sue = type_is_s_or_u(d->ref);
@@ -466,6 +469,21 @@ void fold_sue(struct_union_enum_st *const sue, symtable *stab)
 				fold_sue_apply_normal_offset(&pack_state, &offset, &bitfield);
 			}
 
+			if(fopt_mode & FOPT_DUMP_STRUCT_LAYOUT){
+				if(d->bits.var.field_width){
+					printf("\t%d: %d-%"NUMERIC_FMT_D"\t|   %s\n",
+							d->bits.var.struct_offset,
+							d->bits.var.struct_offset_bitfield,
+							d->bits.var.struct_offset_bitfield
+							+ const_fold_val_i(d->bits.var.field_width) - 1,
+							decl_to_str(d));
+				}else{
+					printf("\t%d\t|   %s\n",
+							d->bits.var.struct_offset,
+							decl_to_str(d));
+				}
+			}
+
 			if(pack_state.align > align_max)
 				align_max = pack_state.align;
 			if(pack_state.sz > sz_max)
@@ -491,6 +509,9 @@ warn:
 		sue->size = pack_to_align(
 				sue->primitive == type_struct ? offset : sz_max,
 				align_max);
+
+		if(fopt_mode & FOPT_DUMP_STRUCT_LAYOUT)
+			printf("\t\t| [sizeof=%d,align=%d]\n", sue->size, sue->align);
 	}
 
 	sue->foldprog = SUE_FOLDED_FULLY;

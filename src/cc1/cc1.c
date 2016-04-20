@@ -79,6 +79,7 @@ static struct
 	{ 'f',  "dump-init", FOPT_DUMP_INIT },
 	{ 'f',  "common", FOPT_COMMON },
 	{ 'f',  "short-enums", FOPT_SHORT_ENUMS },
+	{ 'f',  "dump-struct-layout", FOPT_DUMP_STRUCT_LAYOUT },
 
 	{ 'm',  "stackrealign", MOPT_STACK_REALIGN },
 	{ 'm',  "32", MOPT_32 },
