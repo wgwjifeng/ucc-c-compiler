@@ -1,0 +1,34 @@
+--- test.pl ---
+everything should support -v
+map variables to files/etc, tidy "ocheck" => "retcheck", etc
+change to ../../../O/qbe/tools/unit.sh's:
+   // >>> driver 
+   // ...
+   // <<<
+   // >>> output
+   // ...
+   // <<<
+
+--- /tmp hardcoded ---
+check.sh:e=/tmp/check.$$
+debug_check.pl:my $out = '/tmp/ucc.test/debug.out';
+layout_check.sh:		out="/tmp/chk.out.$$"
+layout_check.sh:a=/tmp/$$.chk.a
+layout_check.sh:b=/tmp/$$.chk.b
+retcheck.pl:	my $tmp = "/tmp/$$.out";
+run_tests:my $tdir = '/tmp/ucc.test/';
+
+--- checkers ---
+CHOOSE: archgen.pl asmcheck.pl
+MERGE: check.pl check.sh
+KEEP: caret_check.pl
+REMOVE: debug_check.pl
+REMOVE: debug_scope.sh
+KEEP: gdb.sh
+KEEP: jmpcheck.sh
+MERGE: layout_check.sh layout_normalise.pl layout_sort.pl
+TIDY: parser.pl
+TIDY: retcheck.pl
+CHANGE TO MAKE: run_tests
+ATTEMPT-REMOVE: stdoutcheck.pl
+MOVE TO TOOLS: watchdog.pl
