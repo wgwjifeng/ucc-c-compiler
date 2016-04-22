@@ -1,9 +1,6 @@
 #!/usr/bin/perl
 use strict;
 
-my @ignores;
-
-
 sub interrupt
 {
 	exit 25
@@ -18,21 +15,7 @@ sub basename
 
 sub usage
 {
-	die "Usage: $0 [-q | -v] [-i ignore-file] [tests...]\n";
-}
-
-sub read_ignores
-{
-	my $f = shift;
-	open F, '<', $f or die "open $f: $!";
-
-	my @f =
-		grep { length }
-		map { s/ *#.*//; $_ }
-		map { chomp $_; $_ } <F>;
-
-	close F;
-	return @f;
+	die "Usage: $0 [-q | -v] [tests...]\n";
 }
 
 sub test
@@ -67,22 +50,10 @@ sub cat_indent_file
 	close F;
 }
 
-sub ignored
-{
-	my $f = shift;
-	for(@ignores){
-		if(index($f, $_) != -1){
-			return 1;
-		}
-	}
-	return 0;
-}
-
 $SIG{INT} = \&interrupt;
 
 my $verbose = 0;
 my $quiet = 0;
-my $ign_file = undef;
 my @tests;
 
 for(my $i = 0; $i < @ARGV; $i++){
@@ -90,10 +61,6 @@ for(my $i = 0; $i < @ARGV; $i++){
 		$verbose = 1;
 	}elsif($ARGV[$i] eq '-q'){
 		$quiet = 1;
-	}elsif($ARGV[$i] eq '-i'){
-		my $f = $ARGV[++$i];
-		usage() unless $f;
-		$ign_file = $f;
 
 	}else{
 		push @tests, $ARGV[$i];
@@ -101,8 +68,6 @@ for(my $i = 0; $i < @ARGV; $i++){
 }
 
 die "can't be quiet and verbose" if $quiet and $verbose;
-
-@ignores = read_ignores($ign_file) if $ign_file;
 
 my $tdir = '/tmp/ucc.test/';
 my @unlinks;
@@ -162,13 +127,9 @@ for my $f (@test_files){
 		$desc = 'pass';
 	}
 
-	my $ignored = ignored($f);
+	print "$desc: $f";
 
-	print "$desc"
-	. ($ignored ? ' (fail expected)' : '')
-	. ": $f";
-
-	if($failed != $ignored){
+	if($failed != 0){
 		print "\n";
 
 		$ec = 1;
