@@ -4,8 +4,6 @@
 
 use warnings;
 
-my $timeout = 2;
-
 sub apply_vars;
 sub die2;
 sub usage
@@ -16,12 +14,6 @@ sub usage
 sub wexitstatus
 {
 	return (shift >> 8) & 0xff
-}
-
-sub timeout
-{
-	system("../tools/timeout", $timeout, @_);
-	return $?;
 }
 
 sub basename
@@ -41,11 +33,6 @@ for(@ARGV){
 		$ucc = $1;
 	}elsif($_ eq '-v'){
 		$verbose = 1;
-	}elsif(/--timeout=(.+)/){
-		$timeout = $1;
-		if($timeout !~ /^[0-9]+$/){
-			die "$0: timeout must be numeric\n";
-		}
 	}elsif($_ eq '--keep'){
 		$keep_temps = 1;
 	}elsif(!defined $file){
@@ -147,7 +134,7 @@ while(<F>){
 
 			my $want_err = ($subst_sh =~ s/^ *! *//);
 
-			my $ec = timeout($subst_sh);
+			my $ec = system($subst_sh);
 
 			if($ec & 127){
 				# signal death - always a failure
