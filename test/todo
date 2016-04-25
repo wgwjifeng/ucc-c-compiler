@@ -31,4 +31,3 @@ TIDY: parser.pl
 TIDY: retcheck.pl
 CHANGE TO MAKE: run_tests
 ATTEMPT-REMOVE: stdoutcheck.pl
-MOVE TO TOOLS: watchdog.pl
