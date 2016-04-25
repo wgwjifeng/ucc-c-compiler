@@ -19,15 +19,14 @@ retcheck.pl:	my $tmp = "/tmp/$$.out";
 run_tests:my $tdir = '/tmp/ucc.test/';
 
 --- checkers ---
+ATTEMPT-REMOVE: stdoutcheck.pl
+CHANGE TO MAKE: run_tests
 CHOOSE: archgen.pl asmcheck.pl
-MERGE: check.pl check.sh
 KEEP: caret_check.pl
-REMOVE: debug_check.pl
-REMOVE: debug_scope.sh
 KEEP: gdb.sh
 KEEP: jmpcheck.sh
+MERGE: check.pl check.sh
 MERGE: layout_check.sh layout_normalise.pl layout_sort.pl
+MOVE TO TOOLS: watchdog.pl
 TIDY: parser.pl
 TIDY: retcheck.pl
-CHANGE TO MAKE: run_tests
-ATTEMPT-REMOVE: stdoutcheck.pl
