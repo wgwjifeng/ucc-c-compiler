@@ -113,6 +113,7 @@ enum wmode wmode =
 	| WBACKSLASH_SPACE_NEWLINE;
 
 enum comment_strip strip_comments = STRIP_ALL;
+int option_show_include_nesting;
 
 static const struct
 {
@@ -296,6 +297,10 @@ int main(int argc, char **argv)
 
 			case 'P':
 				option_line_info = 0;
+				break;
+
+			case 'H':
+				option_show_include_nesting = 1;
 				break;
 
 			case 'C':
@@ -562,6 +567,7 @@ usage:
 				"  -Uxyz: Undefine xyz\n"
 				"  -o output: output file\n"
 				"  -P: don't add #line directives\n"
+				"  -H: show header includes and nesting depth\n"
 				"  -dM: debug output\n"
 				"  -dS: print macro usage stats\n"
 				"  -MM: generate Makefile dependencies\n"

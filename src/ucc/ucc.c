@@ -526,6 +526,7 @@ usage:
 				case 'D':
 				case 'U':
 					found = 1;
+				case 'H':
 				case 'P':
 arg_cpp:
 					ADD_ARG(mode_preproc);
