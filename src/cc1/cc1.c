@@ -80,6 +80,7 @@ static struct
 	{ 'f',  "common", FOPT_COMMON },
 	{ 'f',  "short-enums", FOPT_SHORT_ENUMS },
 	{ 'f',  "dump-struct-layout", FOPT_DUMP_STRUCT_LAYOUT },
+	{ 'f',  "debug-emit-compdir", FOPT_DEBUG_EMIT_COMPDIR },
 
 	{ 'm',  "stackrealign", MOPT_STACK_REALIGN },
 	{ 'm',  "32", MOPT_32 },
@@ -115,7 +116,8 @@ unsigned long fopt_mode = FOPT_CONST_FOLD
                     | FOPT_CAST_W_BUILTIN_TYPES
                     | FOPT_PRINT_TYPEDEFS
                     | FOPT_PRINT_AKA
-                    | FOPT_COMMON;
+                    | FOPT_COMMON
+                    | FOPT_DEBUG_EMIT_COMPDIR;
 
 enum cc1_backend cc1_backend = BACKEND_ASM;
 
@@ -323,16 +325,18 @@ static void gen_backend(symtable_global *globs, const char *fname)
 		case BACKEND_ASM:
 		{
 			char buf[4096];
-			char *compdir;
+			char *compdir = NULL;
 			struct out_dbg_filelist *filelist;
 
-			compdir = getcwd(NULL, 0);
-			if(!compdir){
-				/* no auto-malloc */
-				compdir = getcwd(buf, sizeof(buf)-1);
-				/* PATH_MAX may not include the  ^ nul byte */
-				if(!compdir)
-					die("getcwd():");
+			if(fopt_mode & FOPT_DEBUG_EMIT_COMPDIR){
+				compdir = getcwd(NULL, 0);
+				if(!compdir){
+					/* no auto-malloc */
+					compdir = getcwd(buf, sizeof(buf)-1);
+					/* PATH_MAX may not include the  ^ nul byte */
+					if(!compdir)
+						die("getcwd():");
+				}
 			}
 
 			gen_asm(globs,

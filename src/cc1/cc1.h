@@ -41,7 +41,8 @@ enum fopt
 	FOPT_DUMP_INIT             = 1 << 29,
 	FOPT_PRINT_AKA             = 1 << 30,
 	FOPT_SHORT_ENUMS           = 1 << 31,
-	FOPT_DUMP_STRUCT_LAYOUT    = 1L << 32
+	FOPT_DUMP_STRUCT_LAYOUT    = 1L << 32,
+	FOPT_DEBUG_EMIT_COMPDIR    = 1L << 33
 };
 
 enum mopt

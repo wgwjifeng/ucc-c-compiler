@@ -1108,7 +1108,8 @@ static struct DIE_compile_unit *dwarf_cu(
 
 	dwarf_attr(&cu->die, DW_AT_name, DW_FORM_string, (char *)fname);
 
-	dwarf_attr(&cu->die, DW_AT_comp_dir, DW_FORM_string, (char *)compdir);
+	if(compdir)
+		dwarf_attr(&cu->die, DW_AT_comp_dir, DW_FORM_string, (char *)compdir);
 
 	dwarf_attr(&cu->die, DW_AT_stmt_list,
 			DW_FORM_ADDR4,
