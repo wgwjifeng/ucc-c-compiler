@@ -848,31 +848,31 @@ unsigned sue_hash(const struct_union_enum_st *sue)
 static unsigned type_hash2(
 		const type *t, unsigned nest_hash(const type *))
 {
-	unsigned hash = t->type << 20 | (unsigned)(unsigned long)t;
+	unsigned hash = t->type << 20 ^ (unsigned)(unsigned long)t;
 
 	switch(t->type){
 		case type_auto:
 			ICE("auto type");
 
 		case type_btype:
-			hash |= t->bits.type->primitive | sue_hash(t->bits.type->sue);
+			hash ^= t->bits.type->primitive ^ sue_hash(t->bits.type->sue);
 			break;
 
 		case type_tdef:
-			hash |= nest_hash(t->bits.tdef.type_of->tree_type);
-			hash |= 1 << 3;
+			hash ^= nest_hash(t->bits.tdef.type_of->tree_type);
+			hash ^= 1 << 3;
 			break;
 
 		case type_ptr:
 			if(t->bits.ptr.decayed_from)
-				hash |= nest_hash(t->bits.ptr.decayed_from);
+				hash ^= nest_hash(t->bits.ptr.decayed_from);
 			break;
 
 		case type_array:
 			if(t->bits.array.size)
-				hash |= nest_hash(t->bits.array.size->tree_type);
-			hash |= 1 << t->bits.array.is_static;
-			hash |= 1 << t->bits.array.is_vla;
+				hash ^= nest_hash(t->bits.array.size->tree_type);
+			hash ^= 1 << t->bits.array.is_static;
+			hash ^= 1 << t->bits.array.is_vla;
 			break;
 
 		case type_block:
@@ -885,17 +885,17 @@ static unsigned type_hash2(
 			decl **i;
 
 			for(i = t->bits.func.args->arglist; i && *i; i++)
-				hash |= nest_hash((*i)->ref);
+				hash ^= nest_hash((*i)->ref);
 
 			break;
 		}
 
 		case type_cast:
-			hash |= t->bits.cast.qual;
+			hash ^= t->bits.cast.qual;
 			break;
 
 		case type_attr:
-			hash |= t->bits.attr->type;
+			hash ^= t->bits.attr->type;
 			break;
 	}
 
