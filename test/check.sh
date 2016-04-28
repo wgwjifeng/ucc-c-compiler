@@ -29,7 +29,7 @@ usage(){
 }
 
 ucc=../ucc
-e=/tmp/check.$$
+e="$UCC_TESTDIR"/check.$$
 
 trap "rm -f $e" EXIT
 

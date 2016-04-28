@@ -9,15 +9,6 @@ change to ../../../O/qbe/tools/unit.sh's:
    // ...
    // <<<
 
---- /tmp hardcoded ---
-check.sh:e=/tmp/check.$$
-debug_check.pl:my $out = '/tmp/ucc.test/debug.out';
-layout_check.sh:		out="/tmp/chk.out.$$"
-layout_check.sh:a=/tmp/$$.chk.a
-layout_check.sh:b=/tmp/$$.chk.b
-retcheck.pl:	my $tmp = "/tmp/$$.out";
-run_tests:my $tdir = '/tmp/ucc.test/';
-
 --- checkers ---
 ATTEMPT-REMOVE: stdoutcheck.pl
 CHANGE TO MAKE: run_tests

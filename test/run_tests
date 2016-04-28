@@ -69,7 +69,8 @@ for(my $i = 0; $i < @ARGV; $i++){
 
 die "can't be quiet and verbose" if $quiet and $verbose;
 
-my $tdir = '/tmp/ucc.test/';
+my $envtmp = $ENV{TMPDIR} or "/tmp";
+my $tdir = "$envtmp/ucc.test/";
 my @unlinks;
 push @unlinks, $tdir;
 if(not -d $tdir and not mkdir($tdir)){
