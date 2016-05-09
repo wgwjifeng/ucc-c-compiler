@@ -1,5 +1,6 @@
 // TEST: target !darwin
 // RUN: %ocheck 0 %s
+// RUN: %check %s
 
 __attribute__((weak))
 void f();
@@ -12,18 +13,21 @@ void g()
 	z = 0;
 }
 
+_Noreturn
+void abort(void);
+
 int main()
 {
-	if(f)
+	if(f) // CHECK: !/warning.*address of lvalue/
 		abort();
 
-	if(&w)
+	if(&w) // CHECK: !/warning.*address of lvalue/
 		abort();
 
-	if(f &&& w)
+	if(f &&& w) // CHECK: !/warning.*address of lvalue/
 		f(w);
 
-	if(&z)
+	if(&z) // CHECK: warning: address of lvalue (int) is always true
 		g();
 
 	return z;
