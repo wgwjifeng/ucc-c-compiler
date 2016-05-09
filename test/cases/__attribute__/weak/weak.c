@@ -1,5 +1,4 @@
-// TEST: target !darwin
-// RUN: %ocheck 0 %s
+// RUN: uname | grep Darwin && exit 0 || %ocheck 0 %s
 // RUN: %check %s
 
 __attribute__((weak))
