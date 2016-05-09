@@ -1,5 +1,10 @@
 #!/bin/sh
 
+. "$(dirname "$0")"/common.sh
+
+require_env UCC
+require_env UCC_TESTDIR
+
 verbose=$UCC_VERBOSE
 error=0
 prefix=
@@ -28,15 +33,13 @@ e="$UCC_TESTDIR"/check.$$
 
 trap "rm -f '$e'" EXIT
 
+if test -n "$verbose"
+then set -x
+fi
+
 $UCC -o/dev/null -c "$@" 2>"$e"
 r=$?
-
-# check for abort
-if test $(expr $r '&' 127) -ne 0
-then
-	echo >&2 "$0: ucc caught signal ($r)"
-	exit 1
-fi
+set +x
 
 if [ $r -ne 0 ]
 then r=1
