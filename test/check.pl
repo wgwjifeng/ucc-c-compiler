@@ -4,42 +4,26 @@ use strict;
 
 require './parser.pl';
 
-sub die2
-{
-	die "$0: @_\n";
-}
-
 sub lines
 {
 	my $f = shift;
-	open F, '<', $f or die2 "open '$f': $!";
+	open F, '<', $f or die "$0: open '$f': $!\n";
 	my @l = <F>;
 	close F;
 	return @l;
 }
 
-my $verbose = 0;
+my $verbose = exists $ENV{UCC_VERBOSE};
 my $prefix = '';
 
-my $shifts = 0;
-for my $arg (@ARGV){
-	last unless $arg =~ /^-/;
-	if($arg eq '-v'){
-		$verbose = 1;
-		$shifts++;
-	}elsif($arg =~ /^--prefix=(.*)/){
-		$prefix = $1;
-		die "no prefix given" unless length $prefix;
-		$shifts++;
-	}else{
-		last;
-	}
-}
-for(; $shifts > 0; $shifts--){
-	shift @ARGV;
+if(@ARGV and $ARGV[0] =~ /^--prefix=(.*)/){
+	$prefix = $1;
+	shift;
+	die "$0: no prefix given" unless length $prefix;
 }
 
-die "Usage: $0 [--prefix=...] [-v] file_with_checks.c\n" unless @ARGV == 1;
+die "Usage: $0 [--prefix=...] file-with-checks\n"
+unless @ARGV == 1;
 
 my @lines;
 my $line;
@@ -185,7 +169,7 @@ iter_lines(
 				$search = $2;
 				$is_regex = 0;
 			}else{
-				die2 "invalid CHECK (line $check->{line}): '$match'"
+				die "$0: invalid CHECK (line $check->{line}): '$match'\n"
 			}
 
 

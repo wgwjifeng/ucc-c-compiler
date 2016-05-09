@@ -1,15 +1,11 @@
 #!/bin/sh
 
-verbose=
+verbose=$UCC_VERBOSE
 error=0
 prefix=
 for arg in "$@"
 do
-	if [ "$arg" = -v ]
-	then
-		shift
-		verbose=-v
-	elif [ "$1" = -e ]
+	if [ "$1" = -e ]
 	then
 		shift
 		error=1
@@ -28,18 +24,17 @@ usage(){
 	exit 1
 }
 
-ucc=../ucc
 e="$UCC_TESTDIR"/check.$$
 
-trap "rm -f $e" EXIT
+trap "rm -f '$e'" EXIT
 
-$ucc -o/dev/null -c "$@" 2>$e
+$UCC -o/dev/null -c "$@" 2>"$e"
 r=$?
 
 # check for abort
-if [ $r -eq 134 ]
+if test $(expr $r '&' 127) -ne 0
 then
-	echo >&2 "abort: ucc on $@"
+	echo >&2 "$0: ucc caught signal ($r)"
 	exit 1
 fi
 
@@ -54,8 +49,8 @@ then
 	then s="no "
 	fi
 	echo "${s}error expected"
-	cat $e
+	cat "$e"
 	exit 1
 fi >&2
-./check.pl $prefix $verbose < $e "$1"
-exit $?
+
+exec ./check.pl $prefix "$1" < $e
