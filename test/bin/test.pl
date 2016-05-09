@@ -11,7 +11,7 @@ my $verbose = 0;
 
 my %vars = (
 	'check'     => './bin/check.sh',
-	'asmcheck'  => './asmcheck.pl',
+	'asmcheck'  => './asmcheck.pl', # replace with stdoutcheck
 	'stdoutcheck' => './bin/stdoutcheck',
 	'ocheck' => './bin/ocheck',
 	'layout_check' => './bin/layout_check.sh',
@@ -19,7 +19,7 @@ my %vars = (
 	'debug_scope' => './bin/debug-scope',
 	'debug_check' => './bin/debug-check',
 	'jmpcheck' => './bin/jmpcheck.sh',
-	'archgen' => './archgen.pl',
+	'archgen' => './archgen.pl', # replace with stdoutcheck + "// RUN@x86: ", etc
 );
 
 sub require_env
