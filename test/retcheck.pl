@@ -1,65 +1,33 @@
 #!/usr/bin/perl
 use warnings;
+use strict;
 
-my $verbose = 0;
-
-sub dirname
-{
-	my $a = shift;
-	return $1 if $a =~ m@^(.*/)[^/]+$@;
-	return './';
-}
-
-sub system_v
-{
-	print "$0: run: @_\n" if $verbose;
-	my $r = system @_;
-	if($r & 127){
-		die "$0 $_[0] killed with " . ($r & 127) . "\n";
-	}
-	return $r;
-}
-
-if($ARGV[0] eq '-v'){
-	$verbose = 1;
-	shift;
-}
+die "Usage: $0 exit-code program [args...]\n"
+unless @ARGV;
 
 my $exp = shift;
-my @unlinks;
-
 if($exp !~ /^[0-9]+$/){
-	die "$exp not numeric";
+	die "$0: $exp not numeric";
 }
 
-unless(-x $ARGV[0]){
+if(!-x $ARGV[0]){
 	# we've been passed a source file
 	my($cmd, @args) = @ARGV;
-	@ARGV = ();
 
 	my $ucc = $ENV{UCC};
 	die "$0: no \$UCC" unless $ucc;
 
-	my $tmp = "$ENV{UCC_TESTDIR}/$$.out";
-	push @unlinks, $tmp;
-	if(system_v($ucc, '-o', $tmp, $cmd, @args)){
-		die;
-	}
+	my $tmp = "$ENV{UCC_TESTDIR}/$$.retcheck-exe";
 
-	$ARGV[0] = $tmp;
+	my @cmd = ($ucc, '-o', $tmp, $cmd, @args);
+	print "$0: run: @cmd\n" if exists $ENV{UCC_VERBOSE};
+	die "$0: couldn't compile\n" if system(@cmd);
+
+	@ARGV = ($tmp);
 }
 
-my $r = system_v(@ARGV);
-
-$r >>= 8;
+my $r = system(@ARGV) >> 8;
 
 if($exp != $r){
 	die "$0: expected $exp, got $r, from @ARGV\n";
-}
-
-END
-{
-	my $r = $?;
-	unlink @unlinks;
-	$? = $r;
 }
