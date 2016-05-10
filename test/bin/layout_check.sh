@@ -66,7 +66,7 @@ rmfiles="$rmfiles $a $b"
 
 set -e
 
-./layout_normalise.pl $sec "$1" | ./layout_sort.pl > $a
-./layout_normalise.pl $sec "$2" | ./layout_sort.pl > $b
+bin/layout_normalise.pl $sec "$1" | bin/layout_sort.pl > $a
+bin/layout_normalise.pl $sec "$2" | bin/layout_sort.pl > $b
 
 exec diff -u $b $a

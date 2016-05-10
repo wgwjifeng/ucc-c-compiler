@@ -7,7 +7,7 @@ use constant
 	GOT   => 1
 };
 
-require './parser.pl';
+require 'bin/parser.pl';
 
 my $src = shift;
 die "Usage: $0 source.c [ucc-args...]\n" unless $src;

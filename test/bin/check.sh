@@ -56,4 +56,4 @@ then
 	exit 1
 fi >&2
 
-exec ./check.pl $prefix "$1" < $e
+exec ./bin/check.pl $prefix "$1" < $e

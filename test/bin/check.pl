@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-require './parser.pl';
+require 'bin/parser.pl';
 
 sub lines
 {
