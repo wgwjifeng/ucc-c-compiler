@@ -1,6 +1,6 @@
 // RUN: %ocheck 0 %s
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check 'Yo'
+// RUN: %t | grep 'Yo'
 
 //#include <wchar.h>
 typedef __WCHAR_TYPE__ wchar_t;

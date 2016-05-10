@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check 'hi 3, yo'
+// RUN: %t | grep 'hi 3, yo'
 
 strlen2(char *s)
 {

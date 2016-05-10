@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check 'A: 000000ff, B: ffffffff'
+// RUN: %t | grep -F 'A: 000000ff, B: ffffffff'
 
 main()
 {

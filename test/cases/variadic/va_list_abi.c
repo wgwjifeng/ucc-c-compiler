@@ -1,7 +1,9 @@
-// RUN: %ucc -c -o %t.o %s
-// below ensures we link with the system libs
-// RUN: cc -o %t %t.o
-// RUN: %t | %output_check before 'hi 5 hello' after
+// RUN: %ucc -o %t %s
+// RUN: %t | %stdoutcheck %s
+
+// STDOUT: before
+// STDOUT-NEXT: hi 5 hello
+// STDOUT-NEXT: after
 
 #define va_list __builtin_va_list
 #define va_start __builtin_va_start

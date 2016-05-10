@@ -1,5 +1,8 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check a b
+// RUN: %t | %stdoutcheck %s
+// STDOUT: a
+// STDOUT-NEXT: b
+
 static int (*fs[3])();
 static int f_i;
 

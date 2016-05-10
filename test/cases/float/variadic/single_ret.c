@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check '3'
+// RUN: %t | grep 3
 
 double f(int a, ...)
 {

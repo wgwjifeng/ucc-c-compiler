@@ -1,5 +1,6 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check '3'
+// RUN: %t | %stdoutcheck %s
+// STDOUT: 3
 main()
 {
 	int i;

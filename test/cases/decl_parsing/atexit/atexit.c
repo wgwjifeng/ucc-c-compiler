@@ -1,5 +1,8 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check bye beet
+// RUN: %t | %stdoutcheck %s
+// STDOUT: bye
+// STDOUT-NEXT: beet
+
 p_hi()
 {
 	printf("beet\n");

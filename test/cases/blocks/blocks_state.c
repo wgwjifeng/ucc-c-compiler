@@ -1,5 +1,10 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check 2 7 5 hi
+// RUN: %t | %stdoutcheck %s
+// STDOUT: 2
+// STDOUT-NEXT: 7
+// STDOUT-NEXT: 5
+// STDOUT-NEXT: hi
+
 int the_i;
 
 int (^makeadder(int i))(int)

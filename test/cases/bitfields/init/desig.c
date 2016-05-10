@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check '65536' '-1 -2' '11'
+// RUN: %t | %stdoutcheck %s
 
 struct Desig
 {
@@ -25,3 +25,6 @@ main()
 
 	printf("%d\n", 0xf & *(char *)&yo);
 }
+// STDOUT: 65536
+// STDOUT-NEXT: -1 -2
+// STDOUT-NEXT: 11

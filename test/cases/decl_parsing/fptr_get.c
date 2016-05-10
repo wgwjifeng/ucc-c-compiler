@@ -1,5 +1,6 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check yo
+// RUN: %t | grep yo
+
 int x()
 {
 	printf("yo\n");

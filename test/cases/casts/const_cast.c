@@ -1,5 +1,8 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check 46 -5
+// RUN: %t | %stdoutcheck %s
+
+// STDOUT: 46
+// STDOUT-NEXT: -5
 
 f()
 {

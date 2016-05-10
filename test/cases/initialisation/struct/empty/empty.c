@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check '0 0 0 8'
+// RUN: %t | grep -F '0 0 0 8'
 
 struct A
 {

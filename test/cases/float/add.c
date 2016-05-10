@@ -1,6 +1,6 @@
 // RUN: %ucc -o %t %s
 // RUN: %t
-// RUN: %t | %output_check '4.5'
+// RUN: %t | grep -F '4.5'
 
 main()
 {

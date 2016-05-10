@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | %output_check '1793'
+// RUN: %t | grep 1793
 
 f(a, b, c, d, e, f, g, h)
 {

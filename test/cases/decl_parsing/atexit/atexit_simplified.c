@@ -1,6 +1,9 @@
 // RUN: %ucc -o %t %s
 // RUN: %t
-// RUN: %t | %output_check a b c
+// RUN: %t | %stdoutcheck %s
+// STDOUT: a
+// STDOUT-NEXT: b
+// STDOUT-NEXT: c
 
 void (*fs[3])(void);
 int f_i;
