@@ -1,10 +1,12 @@
 #!/usr/bin/perl
+use warnings;
 use strict;
 
 sub interrupt
 {
 	exit 25
 }
+$SIG{INT} = \&interrupt;
 
 sub basename
 {
@@ -15,140 +17,168 @@ sub basename
 
 sub usage
 {
-	die "Usage: $0 [-q | -v] [tests...]\n";
+	die <<"!"
+Usage: $0 [-k] [-s] [-v] [-j jobcount] [tests...]
+
+-k: Keep going
+-s: Silent, don't output commands about to run
+-v: Verbose, subcommands emit extra information
+-j: Run with asynchronous jobs
+!
 }
-
-sub test
-{
-	my %args = @_; # keys = file, output, verbose
-
-	my $pid = fork();
-	if($pid == 0){
-		# ./test.pl -v "$1" < /dev/null > "$2" 2>&1
-		open STDIN, '</dev/null' or die;
-		open STDOUT, '>', $args{output} or die;
-		open STDERR, '>&STDOUT' or die;
-
-		my @args = @args{file};
-		unshift @args, '-v' if $args{verbose};
-		exec './test.pl', @args;
-		die "exec: $!";
-	}
-	if(wait() != $pid){
-		die "bad wait return? $!";
-	}
-
-	my $r = $?;
-	return $r;
-}
-
-sub cat_indent_file
-{
-	my $f = shift;
-	open F, '<', $f or die "open $f: $!\n";
-	print "\t$_" while <F>;
-	close F;
-}
-
-$SIG{INT} = \&interrupt;
 
 my $verbose = 0;
 my $quiet = 0;
+my $jobs = 1;
+my $keep_going = 0;
 my @tests;
 
 for(my $i = 0; $i < @ARGV; $i++){
 	if($ARGV[$i] eq '-v'){
 		$verbose = 1;
-	}elsif($ARGV[$i] eq '-q'){
+	}elsif($ARGV[$i] eq '-s'){
 		$quiet = 1;
+	}elsif($ARGV[$i] eq '-k'){
+		$keep_going = 1;
+	}elsif($ARGV[$i] =~ /^-j(.*)$/){
+		my $n = $1;
+		if($n eq ''){
+			$i++;
+			die "$0: need number for -j\n" if $i == @ARGV;
+			$n = $ARGV[$i];
+		}
+		die "$0: '$n' not a number\n" if $n !~ /^[0-9]+$/;
+		die "$0: '$n' less than 1\n" if $n < 1;
+
+		$jobs = $n;
 
 	}else{
+		if($ARGV[$i] =~ /^-/){
+			if($ARGV[$i] eq '--'){
+				$i++;
+				push @tests, @ARGV[$i ... $#ARGV];
+				last;
+			}else{
+				usage();
+			}
+		}
+
 		push @tests, $ARGV[$i];
 	}
 }
 
-die "can't be quiet and verbose" if $quiet and $verbose;
-
-my $envtmp = $ENV{TMPDIR} or "/tmp";
-my $tdir = "$envtmp/ucc.test/";
-my @unlinks;
-push @unlinks, $tdir;
+my $envtmp = $ENV{TMPDIR} || "/tmp/";
+my $tdir = "$envtmp/ucc.test.$$/";
 if(not -d $tdir and not mkdir($tdir)){
-	die "mkdir: $!";
+	die "$0: mkdir $tdir: $!\n";
 }
+
+$ENV{UCC} = '../ucc';
 $ENV{UCC_TESTDIR} = $tdir;
 
+if($verbose){
+	$ENV{UCC_VERBOSE} = 1;
+}else{
+	delete $ENV{UCC_VERBOSE};
+}
+
 my $ec = 0;
+my %tasks; # pid => { output, testfile }
 
 sub find_tests
 {
 	# DFS
 	my @found;
-	for(my $i = 0; $i < @_; $i++){
-		$_ = $_[$i];
-		if(-d $_){
-			push @found, find_tests(glob "$_/*");
-		}elsif($_ =~ /\.c$/){
-			push @found, $_;
+	for my $ent (@_){
+		if(-d $ent){
+			push @found, find_tests(glob "$ent/*");
+		}elsif($ent =~ /\.c$/){
+			push @found, $ent;
 		}
 	}
 	return @found;
 }
 
-my @test_files = find_tests(@tests);
-die "$0: no tests\n" unless @test_files;
+sub reap_all_tests
+{
+	reap_test() while keys %tasks;
+}
 
-for my $f (@test_files){
-	chomp($f);
+sub reap_test
+{
+	my $pid = wait;
+	my $rc = $?;
 
-	print "$0: $f\n" if $verbose;
-
-	my %args = (
-		file => $f,
-		output => "$tdir/" . basename($f),
-		verbose => $verbose
-	);
-
-	my $rc = test(%args);
+	if(!exists $tasks{$pid}){
+		warn "$0: unknown child $pid\n";
+		for(keys %tasks){
+			warn "pid: $_, testfile: $tasks{$_}->{testfile}\n";
+		}
+		exit 1;
+	}
 
 	if($rc & 127){
-		die "test caught signal " . ($rc & 127) . "\n";
+		die "test $tasks{$pid}->{testfile} caught signal " . ($rc & 127) . "\n";
 	}
 	$rc >>= 8; # exit code
 
-	my $desc;
-	my $failed = 0;
+	my $desc = ($rc ? 'fail' : 'pass');
 
-	if($rc == 1){
-		$desc = 'fail';
-		$failed = 1;
-	}elsif($rc == 2){
-		$desc = 'skip';
-	}else{
-		$desc = 'pass';
+	if(not $quiet or $rc){
+		print "$desc: $tasks{$pid}->{testfile}\n";
 	}
 
-	print "$desc: $f";
+	my $output = $tasks{$pid}->{output};
+	delete $tasks{$pid};
 
-	if($failed != 0){
-		print "\n";
-
+	if($rc){
 		$ec = 1;
-		# dump output
-		cat_indent_file($args{output});
-	}elsif($quiet){
-		# clear to eol, move cursor to start
-		print "\e[K\r";
-	}else{
-		print "\n";
+		system('cat', $output);
+
+		if(!$keep_going){
+			# had failure - reap all tests and exit
+			print STDERR "$0: waiting for remaining tasks...\n"
+			if keys %tasks;
+
+			reap_all_tests();
+			exit(1);
+		}
 	}
 }
 
-END
+sub launch_test
 {
-	my $r = $?;
-	system('rm', '-r', @unlinks) if @unlinks;
-	$? = $r;
+	print "$0: $_[1]\n" if $verbose;
+
+	my $pid = fork();
+	die "$0: fork: $!\n" if $pid < 0;
+
+	if($pid == 0){
+		my $f = "$tdir/$$.all";
+
+		open STDIN, '</dev/null' or die;
+		open STDOUT, '>', $f or die;
+		open STDERR, '>&STDOUT' or die;
+
+		exec @_;
+		die "exec: $!";
+	}
+
+	my $f = "$tdir/$pid.all";
+	$tasks{$pid} = { output => $f, testfile => $_[1] };
 }
+
+my @test_files = find_tests(@tests);
+die "$0: no tests found\n" unless @test_files;
+
+for my $f (@test_files){
+	reap_test() while keys %tasks >= $jobs;
+
+	launch_test('./bin/test.pl', $f);
+}
+
+reap_all_tests();
+
+system('rm', '-rf', $tdir) if defined $tdir;
 
 exit $ec;
