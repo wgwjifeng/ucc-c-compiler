@@ -1,21 +1,15 @@
 #!/bin/sh
 
 usage(){
-	echo "Usage: $0 A [B] -- [cc-args]\n" >&2
+	echo "Usage: $0 [--sections] A [B] -- [cc-args]\n" >&2
+	echo "  --sections: Check sections too" >&2
 	exit 1
 }
 
-verbose=0
-if [ "$1" = -v ]
-then
-	verbose=1
-	shift
-fi
+verbose=$UCC_VERBOSE
 
 sec=
-if [ "$1" = '--help' ]
-then usage
-elif [ "$1" = '--sections' ]
+if test "$1" = '--sections'
 then
 	sec="$1"
 	shift
@@ -27,7 +21,7 @@ rmfiles(){
 rmfiles=
 trap rmfiles EXIT
 
-if [ $# -ge 1 ]
+if test $# -ge 1
 then
 	if echo "$1" | grep '\.c$' > /dev/null
 	then
@@ -37,14 +31,16 @@ then
 
 		rmfiles="$rmfiles $out"
 
-		if [ $verbose -ne 0 ]
-		then echo "$0: ucc -S -o'$out' '$in' $@"
+		if test $verbose -ne 0
+		then set -x
 		fi
 
 		# $@ are the optional compiler args
 		"$UCC" -S -o"$out" "$in" -fno-common "$@"
 		r=$?
-		if [ $r -ne 0 ]
+		set +x
+
+		if test $r -ne 0
 		then exit $r
 		fi
 
@@ -54,7 +50,7 @@ then
 	fi
 fi
 
-if [ $# -ne 2 ]
+if test $# -ne 2
 then usage
 fi
 
@@ -73,4 +69,4 @@ set -e
 ./layout_normalise.pl $sec "$1" | ./layout_sort.pl > $a
 ./layout_normalise.pl $sec "$2" | ./layout_sort.pl > $b
 
-diff -u $b $a
+exec diff -u $b $a
