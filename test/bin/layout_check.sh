@@ -6,6 +6,8 @@ usage(){
 	exit 1
 }
 
+. "$(dirname "$0")/common.sh"
+
 verbose=$UCC_VERBOSE
 
 sec=
@@ -23,27 +25,9 @@ trap rmfiles EXIT
 
 if test $# -ge 1
 then
-	if echo "$1" | grep '\.c$' > /dev/null
+	# maybe_compile sets $out
+	if maybe_compile -S -fno-common -- "$@"
 	then
-		in="$1"
-		shift
-		out="$UCC_TESTDIR/chk.out.$$"
-
-		rmfiles="$rmfiles $out"
-
-		if test $verbose -ne 0
-		then set -x
-		fi
-
-		# $@ are the optional compiler args
-		"$UCC" -S -o"$out" "$in" -fno-common "$@"
-		r=$?
-		set +x
-
-		if test $r -ne 0
-		then exit $r
-		fi
-
 		set -- "$out" "$in.layout"
 	else
 		set -- "$1" "${1}.layout"
