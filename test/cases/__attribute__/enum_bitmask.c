@@ -1,4 +1,3 @@
-// RUN: %ucc %s
 // RUN: %check %s
 
 enum __attribute__((enum_bitmask)) e

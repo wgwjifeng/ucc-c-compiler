@@ -1,19 +1,13 @@
-// RUN: %ucc %s
-f(char *s)
-{
-	printf("f(\"%s\")\n", s);
-}
+// RUN: %ucc -c -o %t %s
 
-g(char *p)
-{
-	printf("g(%p) = %d\n", p, *p);
-}
+f(char *s);
+g(char *p);
 
 main()
 {
 	/* the "" and the compound literal must be in different symtables,
 	 * so the compound-literal::gen code doesn't generate all decls
-	 * (i.e. the "") again.
+	 * (i.e. generate the "") again.
 	 */
 
 	f(   ""          );

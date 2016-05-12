@@ -1,5 +1,5 @@
 // RUN: %ucc -o %t %s
-// RUN: %t | grep -F '-1.0'
+// RUN: %t | grep -F -- '-1.0'
 
 float f = -1.0f;
 

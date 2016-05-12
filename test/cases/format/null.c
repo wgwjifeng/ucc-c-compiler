@@ -1,4 +1,4 @@
-// RUN: %ucc %s
+// RUN: %ucc -fsyntax-only %s
 
 #include "printf.h"
 #define NULL (void *)0
