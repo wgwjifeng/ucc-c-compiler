@@ -31,6 +31,7 @@ my $verbose = 0;
 my $quiet = 0;
 my $jobs = 1;
 my $keep_going = 0;
+my $progress = 0;
 my @tests;
 
 for(my $i = 0; $i < @ARGV; $i++){
@@ -40,6 +41,8 @@ for(my $i = 0; $i < @ARGV; $i++){
 		$quiet = 1;
 	}elsif($ARGV[$i] eq '-k'){
 		$keep_going = 1;
+	}elsif($ARGV[$i] eq '-P'){
+		$progress = 1;
 	}elsif($ARGV[$i] =~ /^-j(.*)$/){
 		my $n = $1;
 		if($n eq ''){
@@ -84,6 +87,11 @@ if($verbose){
 
 my $ec = 0;
 my %tasks; # pid => { output, testfile }
+
+sub cursor_clrtoeol
+{
+	print "\e[K";
+}
 
 sub find_tests
 {
@@ -168,13 +176,27 @@ sub launch_test
 	$tasks{$pid} = { output => $f, testfile => $_[1] };
 }
 
+sub show_progress
+{
+	my($i, $n) = @_;
+
+	printf "%d%% (%d/%d)\r", $i / $n * 100, $i, $n;
+}
+
 my @test_files = find_tests(@tests);
 die "$0: no tests found\n" unless @test_files;
 
-for my $f (@test_files){
+$| = 1 if $progress;
+
+for(my $fi = 0; $fi < @test_files; $fi++){
 	reap_test() while keys %tasks >= $jobs;
 
+	show_progress($fi + 1, scalar @test_files) if $progress;
+
+	my $f = $test_files[$fi];
 	launch_test('./bin/test.pl', $f);
+
+	show_progress($fi + 1, scalar @test_files) if $progress;
 }
 
 reap_all_tests();
