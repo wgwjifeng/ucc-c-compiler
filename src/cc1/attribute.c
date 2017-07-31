@@ -230,6 +230,7 @@ int attribute_equal(attribute *a, attribute *b)
 			break;
 
 		case attr_unused:
+		case attr_used:
 		case attr_warn_unused:
 		case attr_enum_bitmask:
 		case attr_noreturn:
