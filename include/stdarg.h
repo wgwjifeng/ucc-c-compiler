@@ -13,4 +13,7 @@ typedef __builtin_va_list va_list;
 
 #define __va_copy(d, s) __builtin_va_copy(d, s)
 
+// mac workaround
+#define _VA_LIST_T
+
 #endif
