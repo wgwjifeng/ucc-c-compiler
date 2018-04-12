@@ -206,7 +206,7 @@ static void gen_asm_global(decl *d, out_ctx *octx)
 
 		sp = decl_asm_spel(d);
 
-		out_func_prologue(octx, sp, d->ref,
+		out_func_prologue(octx, sp, d,
 				nargs,
 				is_vari = type_is_variadic_func(d->ref),
 				argvals);

@@ -77,6 +77,9 @@ static void blk_codegen(out_blk *blk, struct flush_state *st)
 		st->jmpto = NULL;
 	}
 
+	if(blk->align)
+		asm_out_align(SECTION_TEXT, blk->align);
+
 	fprintf(st->f, "%s: # %s\n", blk->lbl, blk->desc);
 	if(blk->force_lbl)
 		fprintf(st->f, "%s: # mustgen_spel\n", blk->force_lbl);
@@ -281,6 +284,15 @@ static out_blk *blk_new_common(out_ctx *octx, char *lbl, const char *desc)
 	octx->mem_blk_head = blk;
 
 	return blk;
+}
+
+void blk_transfer(out_blk *from, out_blk *to)
+{
+	free(to->lbl);
+	to->lbl = from->lbl;
+	to->align = from->align;
+	from->lbl = NULL;
+	from->align = 0;
 }
 
 out_blk *out_blk_new_lbl(out_ctx *octx, const char *lbl)
