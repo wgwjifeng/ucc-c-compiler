@@ -493,11 +493,10 @@ static void asm_declare_init(enum section_type sec, decl_init *init, type *tfor)
 	}
 }
 
-static void asm_out_align(enum section_type sec, unsigned align)
+void asm_out_align(enum section_type sec, unsigned align)
 {
-	if(mopt_mode & MOPT_ALIGN_IS_POW2){
+	if(mopt_mode & MOPT_ALIGN_IS_POW2)
 		align = log2i(align);
-	}
 
 	if(align)
 		asm_out_section(sec, ".align %u\n", align);
