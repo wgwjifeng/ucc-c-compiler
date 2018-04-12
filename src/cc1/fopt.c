@@ -20,6 +20,7 @@ void fopt_default(struct cc1_fopt *opt)
 	opt->print_aka = 1;
 	opt->common = 1;
 	opt->thread_jumps = 1;
+	opt->rounding_math = 1; /* default to rounding math, aka no float const folding/fenv conforming */
 }
 
 int fopt_on(struct cc1_fopt *fopt, const char *argument, int invert)
