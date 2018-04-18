@@ -1812,8 +1812,6 @@ const out_val *impl_op_unary(out_ctx *octx, enum op_type op, const out_val *val)
 {
 	const char *opc;
 
-	val = v_to(octx, val, TO_REG | TO_CONST | TO_MEM);
-
 	switch(op){
 		default:
 			ICE("invalid unary op %s", op_to_str(op));
@@ -1842,6 +1840,8 @@ const out_val *impl_op_unary(out_ctx *octx, enum op_type op, const out_val *val)
 					octx, op_eq,
 					val, out_new_zero(octx, val->t));
 	}
+
+	val = v_to(octx, val, TO_REG | TO_MEM);
 
 	out_asm(octx, "%s%s %s", opc,
 			x86_suffix(val->t),
