@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 
 #include "../../util/util.h"
 #include "../../util/dynarray.h"
@@ -764,6 +765,26 @@ need_char_p:
 	wur_builtin(e);
 }
 
+static void const_nan(expr *e, consty *k)
+{
+	CONST_FOLD_LEAF(k);
+	k->type = CONST_NUM;
+
+	switch(e->bits.builtin_nantype){
+		case builtin_nanf:
+			k->bits.num.suffix = VAL_FLOAT;
+			break;
+		case builtin_nan:
+			k->bits.num.suffix = VAL_DOUBLE;
+			break;
+		case builtin_nanl:
+			k->bits.num.suffix = VAL_LDOUBLE;
+			break;
+	}
+
+	k->bits.num.val.f = NAN;
+}
+
 static const out_val *builtin_gen_nan(const expr *e, out_ctx *octx)
 {
 	return out_new_nan(octx, e->tree_type);
@@ -772,6 +793,7 @@ static const out_val *builtin_gen_nan(const expr *e, out_ctx *octx)
 static expr *builtin_nan_mutate(expr *e)
 {
 	expr_mutate_builtin(e, nan);
+	e->f_const_fold = const_nan;
 	return e;
 }
 
