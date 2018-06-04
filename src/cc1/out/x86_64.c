@@ -935,18 +935,50 @@ static const char *x86_cmp(const struct flag_opts *flag)
 	return NULL;
 }
 
+static void determine_movabs(
+		const integral_t val,
+		type *ty,
+		int *const should_movabs,
+		int *const negative)
+{
+	int high_bit = integral_high_bit(val, ty);
+	sintegral_t flipped;
+	integral_t relevant_mask;
+
+	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
+	*negative = 0;
+
+	if(!*should_movabs)
+		return;
+
+	/* can we represent as a (sign-extended) negative int? */
+	relevant_mask = (integral_t)-1 >> (type_primitive_size(type_int) * CHAR_BIT);
+	flipped = ~val & relevant_mask;
+
+	high_bit = integral_high_bit(flipped, ty);
+
+	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
+	*negative = 1;
+
+	if(!*should_movabs)
+		fprintf(stderr, "circumventing large load of %#llx using negative (-%#llx)\n",
+				val, flipped);
+}
+
 static const out_val *x86_load_iv(
 		out_ctx *octx, const out_val *from,
 		const struct vreg *reg /* may be null */)
 {
-	const int high_bit = integral_high_bit(from->bits.val_i, from->t);
-	struct vreg r;
+	int should_movabs, negative_literal;
 
 	assert(from->type == V_CONST_I);
 	assert(!type_is_floating(from->t));
 
-	if(high_bit >= AS_MAX_MOV_BIT){
+	determine_movabs(from->bits.val_i, from->t, &should_movabs, &negative_literal);
+
+	if(should_movabs){
 		char buf[INTEGRAL_BUF_SIZ];
+		struct vreg r;
 
 		if(!reg){
 			reg = &r;
@@ -956,26 +988,27 @@ static const out_val *x86_load_iv(
 		/* TODO: 64-bit registers in general on 32-bit */
 		UCC_ASSERT(!IS_32_BIT(), "TODO: 32-bit 64-literal loads");
 
-		if(high_bit > 31 /* not necessarily AS_MAX_MOV_BIT */){
-			/* must be loading a long */
-			if(type_size(from->t, NULL) != 8){
-				/* FIXME: enums don't auto-size currently */
-				ICW("loading 64-bit literal (%lld) for non-8-byte type? (%s)",
-						from->bits.val_i, type_to_str(from->t));
-			}
-		}
-
 		integral_str(buf, sizeof buf, from->bits.val_i, NULL);
-
 		out_asm(octx, "movabsq $%s, %%%s", buf, x86_reg_str(reg, NULL));
 	}else{
 		if(!reg)
 			return from; /* V_CONST_I is fine */
 
-		out_asm(octx, "mov%s %s, %%%s",
-				x86_suffix(from->t),
-				impl_val_str(from, 0),
-				x86_reg_str(reg, from->t));
+		if(negative_literal){
+			char buf[INTEGRAL_BUF_SIZ];
+
+			integral_str(buf, sizeof buf, -from->bits.val_i, type_sign(cc1_type_nav, from->t, 1));
+
+			out_asm(octx, "mov%s $-%s, %%%s",
+					x86_suffix(from->t),
+					buf,
+					x86_reg_str(reg, from->t));
+		}else{
+			out_asm(octx, "mov%s %s, %%%s",
+					x86_suffix(from->t),
+					impl_val_str(from, 0),
+					x86_reg_str(reg, from->t));
+		}
 	}
 
 	return v_new_reg(octx, from, from->t, reg);
