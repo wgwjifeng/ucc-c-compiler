@@ -394,6 +394,32 @@ static const char *x86_reg_str(const struct vreg *reg, type *r)
 	}
 }
 
+static void determine_movabs(
+		const integral_t val,
+		type *ty,
+		int *const should_movabs,
+		int *const negative)
+{
+	int high_bit = integral_high_bit(val, ty);
+	sintegral_t flipped;
+	integral_t relevant_mask;
+
+	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
+	*negative = 0;
+
+	if(!*should_movabs)
+		return;
+
+	/* can we represent as a (sign-extended) negative int? */
+	relevant_mask = (integral_t)-1 >> (type_primitive_size(type_int) * CHAR_BIT);
+	flipped = ~val & relevant_mask;
+
+	high_bit = integral_high_bit(flipped, ty);
+
+	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
+	*negative = 1;
+}
+
 const char *impl_val_str_r(
 		char buf[VAL_STR_SZ], const out_val *vs, const int deref)
 {
@@ -404,8 +430,9 @@ const char *impl_val_str_r(
 			/* we should never get a 64-bit value here
 			 * since movabsq should load those in
 			 */
-			UCC_ASSERT(integral_high_bit(vs->bits.val_i, vs->t) < AS_MAX_MOV_BIT,
-					"can't load 64-bit constants here (0x%llx)", vs->bits.val_i);
+			int should_movabs, negative_literal;
+			determine_movabs(vs->bits.val_i, vs->t, &should_movabs, &negative_literal);
+			UCC_ASSERT(!should_movabs, "can't load 64-bit constants here (0x%llx)", vs->bits.val_i);
 
 			if(deref == 0)
 				*p++ = '$';
@@ -935,36 +962,6 @@ static const char *x86_cmp(const struct flag_opts *flag)
 	return NULL;
 }
 
-static void determine_movabs(
-		const integral_t val,
-		type *ty,
-		int *const should_movabs,
-		int *const negative)
-{
-	int high_bit = integral_high_bit(val, ty);
-	sintegral_t flipped;
-	integral_t relevant_mask;
-
-	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
-	*negative = 0;
-
-	if(!*should_movabs)
-		return;
-
-	/* can we represent as a (sign-extended) negative int? */
-	relevant_mask = (integral_t)-1 >> (type_primitive_size(type_int) * CHAR_BIT);
-	flipped = ~val & relevant_mask;
-
-	high_bit = integral_high_bit(flipped, ty);
-
-	*should_movabs = high_bit >= AS_MAX_MOV_BIT;
-	*negative = 1;
-
-	if(!*should_movabs)
-		fprintf(stderr, "circumventing large load of %#llx using negative (-%#llx)\n",
-				val, flipped);
-}
-
 static const out_val *x86_load_iv(
 		out_ctx *octx, const out_val *from,
 		const struct vreg *reg /* may be null */)
@@ -998,6 +995,13 @@ static const out_val *x86_load_iv(
 			char buf[INTEGRAL_BUF_SIZ];
 
 			integral_str(buf, sizeof buf, -from->bits.val_i, type_sign(cc1_type_nav, from->t, 1));
+
+			if(!should_movabs){
+				out_comment(
+						octx,
+						"circumventing large load of %#llx using negative",
+						from->bits.val_i);
+			}
 
 			out_asm(octx, "mov%s $-%s, %%%s",
 					x86_suffix(from->t),
