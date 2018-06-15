@@ -41,7 +41,8 @@ struct decl
 
 	char *spel, *spel_asm;
 	enum {
-		DECL_FLAGS_USED = 1 << 0
+		DECL_FLAGS_USED = 1 << 0,
+		DECL_FLAGS_IMPLICIT = 1 << 1
 	} flags;
 
 	union
