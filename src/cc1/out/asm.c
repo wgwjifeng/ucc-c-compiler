@@ -268,7 +268,7 @@ static decl_init **skip_compound_literal(decl_init *init, struct_union_enum_st *
 		assert(expr_kind(copy_from_exp, compound_lit)
 				&& "unhandled expression init");
 
-		copy_from_init = copy_from_exp->bits.complit.decl->bits.var.init.dinit;
+		copy_from_init = expr_comp_lit_init(copy_from_exp);
 		assert(copy_from_init->type == decl_init_brace);
 
 		i = copy_from_init->bits.ar.inits;
