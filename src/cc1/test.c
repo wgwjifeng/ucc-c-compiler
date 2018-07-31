@@ -23,6 +23,8 @@ int show_current_line;
 enum san_opts cc1_sanitize;
 char *cc1_sanitize_handler_fn;
 enum visibility cc1_visibility_default;
+enum stringop_strategy cc1_mstringop_strategy = STRINGOP_STRATEGY_THRESHOLD;
+unsigned cc1_mstringop_threshold = 16;
 
 int where_in_sysheader(const where *w)
 {
