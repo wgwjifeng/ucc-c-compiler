@@ -598,7 +598,7 @@ int main(int argc, char **argv)
 
 				case '\0':
 					if(++i == argc)
-						usage(argv[0], "-emit needs an argument");
+						usage(argv[0], "-emit needs an argument\n");
 					emit = argv[i];
 					break;
 
@@ -614,7 +614,7 @@ int main(int argc, char **argv)
 			else if(!strcmp(emit, "style"))
 				cc1_backend = BACKEND_STYLE;
 			else
-				usage(argv[0], "unknown emit backend \"%s\"", emit);
+				usage(argv[0], "unknown emit backend \"%s\"\n", emit);
 
 		}else if(!strncmp(argv[i], "-g", 2)){
 			switch(argv[i][2]){
@@ -632,7 +632,7 @@ int main(int argc, char **argv)
 
 		}else if(!strcmp(argv[i], "-o")){
 			if(++i == argc)
-				usage(argv[0], "-o needs an argument");
+				usage(argv[0], "-o needs an argument\n");
 
 			if(strcmp(argv[i], "-")){
 				cc1_out = fopen(argv[i], "w");
@@ -676,7 +676,7 @@ int main(int argc, char **argv)
 		}else if(!fname){
 			fname = argv[i];
 		}else{
-			usage(argv[0], "unknown argument: '%s'", argv[i]);
+			usage(argv[0], "unknown argument: '%s'\n", argv[i]);
 		}
 	}
 
