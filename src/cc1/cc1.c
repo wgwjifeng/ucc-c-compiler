@@ -43,16 +43,15 @@ static const char **system_includes;
 
 static struct
 {
-	char type;
 	const char *arg;
 	int mask;
 } mopts[] = {
-	{ 'm',  "stackrealign", MOPT_STACK_REALIGN },
-	{ 'm',  "32", MOPT_32 },
-	{ 'm',  "64", ~MOPT_32 },
-	{ 'm',  "align-is-p2", MOPT_ALIGN_IS_POW2 },
+	{ "stackrealign", MOPT_STACK_REALIGN },
+	{ "32", MOPT_32 },
+	{ "64", ~MOPT_32 },
+	{ "align-is-p2", MOPT_ALIGN_IS_POW2 },
 
-	{ 0,  NULL, 0 }
+	{ NULL, 0 }
 };
 
 static struct
