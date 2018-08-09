@@ -267,7 +267,7 @@ static void io_fin(int do_sections, const char *fname)
 			".section .note.GNU-stack,\"%s\",@progbits\n",
 			execstack ? "x" : "") < 0)
 	{
-		ccdie(0, "write to cc1 output:");
+		ccdie("write to cc1 output:");
 	}
 
 	if(fclose(cc1_out))
