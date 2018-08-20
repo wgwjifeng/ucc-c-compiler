@@ -18,6 +18,7 @@
 #include "dbg.h"
 
 #include "../cc1.h" /* mopt_mode */
+#include "../fopt.h"
 #include "../../util/platform.h"
 #include "../../util/dynarray.h"
 
@@ -95,6 +96,7 @@ void out_func_epilogue(
 		out_ctx *octx, type *ty, char *end_dbg_lbl,
 		int *out_usedstack)
 {
+	int clean_stack;
 	out_blk *call_save_spill_blk = NULL;
 	out_blk *to_flush;
 
@@ -122,9 +124,11 @@ void out_func_epilogue(
 		octx->in_prologue = 0;
 	}
 
+	clean_stack = octx->used_stack || !cc1_fopt.omit_frame_pointer;
+
 	out_current_blk(octx, octx->epilogue_blk);
 	{
-		impl_func_epilogue(octx, ty, octx->used_stack);
+		impl_func_epilogue(octx, ty, clean_stack);
 		/* terminate here without an insn */
 		assert(octx->current_blk->type == BLK_UNINIT);
 		octx->current_blk->type = BLK_TERMINAL;
@@ -133,7 +137,7 @@ void out_func_epilogue(
 	*out_usedstack = octx->used_stack;
 
 	/* space for spills */
-	if(octx->used_stack){
+	if(clean_stack){
 		to_flush = octx->entry_blk;
 		out_current_blk(octx, octx->prologue_prejoin_blk);
 		{
