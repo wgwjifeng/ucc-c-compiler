@@ -86,6 +86,7 @@ enum visibility cc1_visibility_default;
 
 int cc1_mstack_align; /* align stack to n, platform_word_size by default */
 enum debug_level cc1_gdebug = DEBUG_OFF;
+int cc1_gdebug_columninfo = 1;
 
 enum stringop_strategy cc1_mstringop_strategy = STRINGOP_STRATEGY_THRESHOLD;
 unsigned cc1_mstringop_threshold = 16;
@@ -683,7 +684,18 @@ int main(int argc, char **argv)
 			}else if(!strcmp(argv[i], "-gline-tables-only")){
 				cc1_gdebug = DEBUG_LINEONLY;
 			}else{
-				die("-g extra argument unexpected");
+				const char *arg = argv[i] + 2;
+				int on = 1;
+
+				if(!strncmp(arg, "no-", 3)){
+					arg += 3;
+					on = 0;
+				}
+
+				if(!strcmp(arg, "column-info"))
+					cc1_gdebug_columninfo = on;
+				else
+					die("-g extra argument unexpected");
 			}
 
 		}else if(!strcmp(argv[i], "-o")){
